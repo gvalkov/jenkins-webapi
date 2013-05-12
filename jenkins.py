@@ -27,17 +27,10 @@ class Job(object):
         if not self.exists():
             raise JenkinsError('job "%s" does not exist' % self.name)
 
-    def info(self):
-        '''Fetch job information.'''
-
-        url = 'job/%s/api/json?depth=0' % quote(self.name)
-        err = 'job "%s" does not exist' % self.name
-        return self.server.json(url, errmsg=err)
-
     def exists(self):
         '''Determine if job exists.'''
         try:
-            self.info()
+            self.info
             return True
         except JenkinsError:
             return False
@@ -93,6 +86,14 @@ class Job(object):
     @property
     def enabled(self):
         return '<disabled>false</disabled>' in self.config
+
+    @property
+    def info(self):
+        '''Fetch job information.'''
+
+        url = 'job/%s/api/json?depth=0' % quote(self.name)
+        err = 'job "%s" does not exist' % self.name
+        return self.server.json(url, errmsg=err)
             
     @property
     def config(self):
@@ -109,13 +110,11 @@ class Job(object):
 
     @property
     def builds(self):
-        info = self.info()
-        return [Build(self, i['number']) for i in info['builds']]
+        return [Build(self, i['number']) for i in self.info['builds']]
 
     @property
     def buildnumbers(self):
-        info = self.info()
-        return [i['number'] for i in info['builds']]
+        return [i['number'] for i in self.info['builds']]
 
     @classmethod
     def create(cls, name, configxml, server):
@@ -221,6 +220,7 @@ class Jenkins(object):
         cls = self.__class__.__name__
         return '%s(%r)' % (cls, self.url)
 
+    @property
     def info(self):
         '''Get information about this Jenkins instance.'''
         url = 'api/json'
@@ -229,13 +229,11 @@ class Jenkins(object):
 
     @property
     def jobs(self):
-        info = self.info()
-        return [Job(i['name'], self.server) for i in info['jobs']]
+        return [Job(i['name'], self.server) for i in self.info['jobs']]
         
     @property
     def jobnames(self):
-        info = self.info()
-        return [i['name'] for i in info['jobs']]
+        return [i['name'] for i in self.info['jobs']]
 
 
     # convenience job api
@@ -243,7 +241,7 @@ class Jenkins(object):
         return Job(name, self.server)
 
     def job_info(self, name):
-        return self.job(name).info()
+        return self.job(name).info
 
     def job_exists(self, name):
         return self.job(name).exists()
