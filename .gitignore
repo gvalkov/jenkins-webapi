@@ -16,3 +16,4 @@ tags
 doc/_build
 tests/tmp/*
 .tox/
+doc/_build
