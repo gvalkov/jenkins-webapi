@@ -5,7 +5,7 @@ import contextlib
 
 from os.path import abspath, dirname, join as pjoin
 from subprocess import STDOUT, Popen, CalledProcessError, call, check_call
-from util import *
+from tests.util import *
 
 
 __all__ = ['JenkinsInstall']
@@ -39,7 +39,7 @@ class JenkinsInstall(object):
         ''' % self.__dict__
         green(msg1)
         print(textwrap.dedent(msg2))
-                 
+
         if not os.path.exists(self.destdir):
             green('Mkdir: %s' % self.destdir)
             os.makedirs(self.destdir)
@@ -87,7 +87,7 @@ class JenkinsInstall(object):
     def extractcli(self, overwrite=False):
         if not os.path.exists(self.jenkinscli) or overwrite:
             cmd = 'unzip -qqc %s WEB-INF/jenkins-cli.jar > %s' \
-                  % (self.jenkinswar, self.jenkinscli) 
+                  % (self.jenkinswar, self.jenkinscli)
             green('Extracing jenkins-cli.jar from jenkins.war ...')
             print(cmd)
             call(cmd, shell=True)
@@ -109,5 +109,5 @@ class JenkinsInstall(object):
         a.bootstrap()
         a.start() ; print()
         a.wait()  ; print()
-        yield 
+        yield
         a.stop()

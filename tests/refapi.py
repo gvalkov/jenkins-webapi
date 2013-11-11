@@ -1,5 +1,5 @@
 from subprocess import STDOUT,  PIPE, Popen, CalledProcessError
-from util import *
+from . util import *
 
 __all__ = ['JenkinsCLI']
 

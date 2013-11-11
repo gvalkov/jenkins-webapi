@@ -24,7 +24,7 @@ start-jenkins:
 
 remove-jobs:
 	url = 'http://$(JENKINS_ADDR):$(JENKINS_PORT)'
-	from tests.install import JenkinsCLI
+	from tests.refapi import JenkinsCLI
 	cli = JenkinsCLI(url, '$(JENKINS_CLI_JAR)')
 
 	for job in cli.list_jobs():

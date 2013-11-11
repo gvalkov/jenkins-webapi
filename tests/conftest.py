@@ -5,9 +5,9 @@ from os.path import abspath, dirname, join as pjoin
 from functools import partial
 
 from jenkins import Jenkins, Job, JenkinsError
-from install import JenkinsInstall
-from refapi import JenkinsCLI
-from util import *
+from . install import JenkinsInstall
+from . refapi import JenkinsCLI
+from . util import *
 
 
 environments = [
@@ -90,7 +90,7 @@ class TempJob(object):
     def finalize(self):
         self.ref.delete_job(self.name)
         time.sleep(0.1)
-        
+
 
 @pytest.fixture(scope='function')
 def tmpjob(ref, request):

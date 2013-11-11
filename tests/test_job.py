@@ -1,7 +1,7 @@
 import time
 import pytest
 
-from util import *
+from . util import *
 from jenkins import Jenkins, Job, JenkinsError
 
 
@@ -10,7 +10,7 @@ def test_job_exists(api, ref, tmpjob):
 
 def test_job_exists_fail(api, ref):
     assert api.job_exists('does not exist') == False
-        
+
 def test_job_create(api, ref, jobname_wf):
     api.job_create(jobname_wf, econfig_enc)
     time.sleep(1)

@@ -7,6 +7,9 @@ from requests.compat import quote
 from requests.auth import HTTPBasicAuth
 
 
+__all__ = 'Job', 'Jenkins', 'Server', 'JenkinsError'
+
+
 class Job(object):
     '''Represents a jenkins job.'''
 
@@ -64,7 +67,7 @@ class Job(object):
         params = {}
         if token:
             params['token'] = token
-        
+
         if parameters:
             params.update(parameters)
             url = 'job/%s/buildWithParameters' % self.name
@@ -94,12 +97,12 @@ class Job(object):
         url = 'job/%s/api/json?depth=0' % quote(self.name)
         err = 'job "%s" does not exist' % self.name
         return self.server.json(url, errmsg=err)
-            
+
     @property
     def config(self):
         url = 'job/%s/config.xml' % quote(self.name)
         res = self.server.get(url)
-        if res.headers.get('content-type', '') != 'application/xml':
+        if res.status_code != 200 or res.headers.get('content-type', '') != 'application/xml':
             msg = 'fetching configuration for job "%s" did not return a xml document'
             raise JenkinsError(msg % self.name)
         return res.text
@@ -139,7 +142,7 @@ class Job(object):
         '''Copy a Jenkins job.'''
 
         job = cls(source, server)
-        newjob = cls(dest, server) 
+        newjob = cls(dest, server)
 
         if newjob.exists():
             raise JenkinsError('job "%s" already exists' % dest)
@@ -162,7 +165,7 @@ class Build(object):
     '''A representation of a Jenkins build.'''
 
     __slots__ = 'job', 'number'
-    
+
     def __init__(self, job, number):
         self.job = job
         self.number = number
@@ -184,7 +187,7 @@ class Server(object):
     def __repr__(self):
         cls = self.__class__.__name__
         return '%s(%s)' % (cls, self.url)
-        
+
     def urljoin(self, *args):
         return '%s%s' % (self.url, '/'.join(args))
 
@@ -230,11 +233,10 @@ class Jenkins(object):
     @property
     def jobs(self):
         return [Job(i['name'], self.server) for i in self.info['jobs']]
-        
+
     @property
     def jobnames(self):
         return [i['name'] for i in self.info['jobs']]
-
 
     # convenience job api
     def job(self, name):
@@ -248,13 +250,16 @@ class Jenkins(object):
 
     def job_delete(self, name):
         return self.job(name).delete()
-        
+
     def job_enable(self, name):
         return self.job(name).enable()
 
+    def job_enabled(self, name):
+        return self.job(name).enabled
+
     def job_disable(self, name):
         return self.job(name).disable()
-    
+
     def job_config(self, name):
         return self.job(name).config
 
