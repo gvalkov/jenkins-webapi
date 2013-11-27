@@ -83,8 +83,8 @@ class Job(object):
 
         url = 'job/%s/config.xml' % self.name
         headers = {'Content-Type': 'text/xml'}
-        params = {'name': name}
-        res = server.post(url, data=newconfig, params=params, headers=headers)
+        params = {'name': self.name}
+        res = self.server.post(url, data=newconfig, params=params, headers=headers)
 
     @property
     def enabled(self):
