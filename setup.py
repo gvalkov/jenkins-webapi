@@ -20,8 +20,8 @@ classifiers = (
 
 kw = {
     'name'             : 'jenkins-webapi',
-    'version'          : '0.1.0',
-    'description'      : 'library for interacting with jenkins',
+    'version'          : '0.1.2',
+    'description'      : 'package for interacting with the jenkins ci server',
     'long_description' : open(join(abspath(dirname(__file__)), 'README.rst')).read(),
     'author'           : 'Georgi Valkov',
     'author_email'     : 'georgi.t.valkov@gmail.com',
