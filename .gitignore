@@ -14,6 +14,7 @@ pip-log.txt
 .ropeproject
 tags
 doc/_build
-tests/tmp/*
+tests/tmp/
 .tox/
 doc/_build
+__pycache__/
