@@ -202,7 +202,7 @@ class Server(object):
     def json(self, url, errmsg=None, **kw):
         url = self.urljoin(url)
         try:
-            res = requests.get(url, **kw)
+            res = requests.get(url, auth=self.auth, **kw)
             if not res:
                 raise JenkinsError(errmsg)
             return res.json()
