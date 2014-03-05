@@ -170,13 +170,20 @@ class Build(object):
         self.job = job
         self.number = number
 
+    @property
+    def info(self):
+        '''Get information about this build.'''
+        url = 'job/%s/%d/api/json' % (self.job.name, self.number)
+        res = self.job.server.json(url, 'unable to retrieve info')
+        return res
+
     def __repr__(self):
         cls = self.__class__.__name__
         return '%s(%r, %r)' % (cls, self.job, self.number)
 
     def stop(self):
         url = 'job/%s/%d/stop' % (self.job.name, self.number)
-        return self.job.post(url)
+        return self.job.server.post(url)
 
 
 class Server(object):
