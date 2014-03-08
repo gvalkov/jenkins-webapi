@@ -44,21 +44,22 @@ class Job(object):
         self._not_exist_raise()
         url = 'job/%s/doDelete' % quote(self.name)
 
-        self.server.post(url)
+        res = self.server.post(url, throw=False)
         if self.exists():
             raise JenkinsError('delete of job "%s" failed' % self.name)
+        return res
 
     def enable(self):
         '''Enable job.'''
         self._not_exist_raise()
         url = 'job/%s/enable' % quote(self.name)
-        self.server.post(url)
+        return self.server.post(url)
 
     def disable(self):
         '''Disable job.'''
         self._not_exist_raise()
         url = 'job/%s/disable' % quote(self.name)
-        self.server.post(url)
+        return self.server.post(url)
 
     def build(self, parameters=None, token=None):
         '''Trigger a build.'''
@@ -74,7 +75,7 @@ class Job(object):
         else:
             url = 'job/%s/build' % self.name
 
-        self.server.post(url, params=params)
+        return self.server.post(url, params=params)
 
     def reconfigure(self, newconfig):
         '''Update config.xml of an existing job.'''
@@ -84,7 +85,7 @@ class Job(object):
         url = 'job/%s/config.xml' % self.name
         headers = {'Content-Type': 'text/xml'}
         params = {'name': self.name}
-        res = self.server.post(url, data=newconfig, params=params, headers=headers)
+        return self.server.post(url, data=newconfig, params=params, headers=headers)
 
     @property
     def enabled(self):
@@ -129,10 +130,12 @@ class Job(object):
 
         headers = {'Content-Type': 'text/xml'}
         params = {'name': name}
-        res = server.post('createItem', data=configxml, params=params, headers=headers)
+        res = server.post('createItem', data=configxml, params=params, headers=headers, throw=False)
 
         if not res or res.status_code != 200:
-            raise JenkinsError('create "%s" failed' % name, url=res.url)
+            raise JenkinsError('create "%s" failed' % name)
+        else:
+            res.raise_for_status()
 
         # if not job.exists():
         #     raise JenkinsError('create "%s" failed' % name, url=res.url)
@@ -174,8 +177,7 @@ class Build(object):
     def info(self):
         '''Get information about this build.'''
         url = 'job/%s/%d/api/json' % (self.job.name, self.number)
-        res = self.job.server.json(url, 'unable to retrieve info')
-        return res
+        return self.job.server.json(url, 'unable to retrieve info')
 
     def __repr__(self):
         cls = self.__class__.__name__
@@ -198,12 +200,14 @@ class Server(object):
     def urljoin(self, *args):
         return '%s%s' % (self.url, '/'.join(args))
 
-    def post(self, url, **kw):
+    def post(self, url, throw=True, **kw):
         res = requests.post(self.urljoin(url), auth=self.auth, **kw)
+        throw and res.raise_for_status()
         return res
 
-    def get(self, url, **kw):
+    def get(self, url, throw=True, **kw):
         res = requests.get(self.urljoin(url), auth=self.auth, **kw)
+        throw and res.raise_for_status()
         return res
 
     def json(self, url, errmsg=None, **kw):
@@ -288,6 +292,16 @@ class Jenkins(object):
 class JenkinsError(Exception):
     '''General exception type for jenkins-API-related failures.'''
 
-    def __init__(self, msg, url=None, **kw):
-        super(JenkinsError, self).__init__(msg, **kw)
-        self.url = url
+    def __init__(self, msg):
+        super(JenkinsError, self).__init__(msg)
+        self.msg = msg
+
+
+## uncomment to enable http logging
+# import logging, httplib
+# httplib.HTTPConnection.debuglevel = 1
+# logging.basicConfig()
+# logging.getLogger().setLevel(logging.DEBUG)
+# requests_log = logging.getLogger('requests.packages.urllib3')
+# requests_log.setLevel(logging.DEBUG)
+# requests_log.propagate = True
