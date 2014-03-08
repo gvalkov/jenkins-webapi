@@ -7,7 +7,7 @@ from requests.compat import quote
 from requests.auth import HTTPBasicAuth
 
 
-__all__ = 'Job', 'Jenkins', 'Server', 'JenkinsError'
+__all__ = 'Job', 'Jenkins', 'Server', 'JenkinsError', 'Build'
 
 
 class Job(object):
