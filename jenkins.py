@@ -31,7 +31,7 @@ class Job(object):
             raise JenkinsError('job "%s" does not exist' % self.name)
 
     def exists(self):
-        '''Determine if job exists.'''
+        '''Check if job exists.'''
         try:
             self.info
             return True
@@ -78,8 +78,7 @@ class Job(object):
         return self.server.post(url, params=params)
 
     def reconfigure(self, newconfig):
-        '''Update config.xml of an existing job.'''
-
+        '''Update the config.xml of an existing job.'''
         self._not_exist_raise()
 
         url = 'job/%s/config.xml' % self.name
@@ -93,8 +92,6 @@ class Job(object):
 
     @property
     def info(self):
-        '''Fetch job information.'''
-
         url = 'job/%s/api/json?depth=0' % quote(self.name)
         err = 'job "%s" does not exist' % self.name
         return self.server.json(url, errmsg=err)
@@ -249,7 +246,7 @@ class Jenkins(object):
     def jobnames(self):
         return [i['name'] for i in self.info['jobs']]
 
-    # convenience job api
+    # alternative job and build api
     def job(self, name):
         return Job(name, self.server)
 
@@ -265,11 +262,11 @@ class Jenkins(object):
     def job_enable(self, name):
         return self.job(name).enable()
 
-    def job_enabled(self, name):
-        return self.job(name).enabled
-
     def job_disable(self, name):
         return self.job(name).disable()
+
+    def job_enabled(self, name):
+        return self.job(name).enabled
 
     def job_config(self, name):
         return self.job(name).config
@@ -282,15 +279,26 @@ class Jenkins(object):
     def job_build(self, name, parameters=None, token=None):
         return self.job(name).build(parameters, token)
 
+    def job_builds(self, name):
+        return self.job(name).builds
+
     def job_create(self, name, config):
         return Job.create(name, config, self.server)
 
     def job_copy(self, source, dest):
         return Job.copy(source, dest, self.server)
 
+    job_exists.__doc__ = Job.exists.__doc__
+    job_delete.__doc__ = Job.delete.__doc__
+    job_enable.__doc__ = Job.enable.__doc__
+    job_disable.__doc__ = Job.disable.__doc__
+    job_reconfigure.__doc__ = Job.reconfigure.__doc__
+    job_build.__doc__ = Job.build.__doc__
+    job_create.__doc__ = Job.create.__doc__
+    job_copy.__doc__ = Job.copy.__doc__
 
 class JenkinsError(Exception):
-    '''General exception type for jenkins-API-related failures.'''
+    '''Exception type for Jenkins-API related failures.'''
 
     def __init__(self, msg):
         super(JenkinsError, self).__init__(msg)
