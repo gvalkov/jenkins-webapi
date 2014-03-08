@@ -41,7 +41,6 @@ class Job(object):
 
     def delete(self):
         '''Permanently remove job.'''
-
         self._not_exist_raise()
         url = 'job/%s/doDelete' % quote(self.name)
 
@@ -113,6 +112,23 @@ class Job(object):
     @property
     def builds(self):
         return [Build(self, i['number']) for i in self.info['builds']]
+
+    def __last_build_helper(self, path):
+        url = 'job/%s/%s/api/json' % (quote(self.name), path)
+        res = self.server.json(url)
+        return Build(self, res['number'])
+
+    @property
+    def last_build(self):
+        return self.__last_build_helper('lastBuild')
+
+    @property
+    def last_stable_build(self):
+        return self.__last_build_helper('lastStableBuild')
+
+    @property
+    def last_successful_build(self):
+        return self.__last_build_helper('lastSuccessfulBuild')
 
     @property
     def buildnumbers(self):
@@ -263,6 +279,10 @@ class Jenkins(object):
     def job(self, name):
         return Job(name, self.server)
 
+    def build(self, name, number):
+        name = name.name if isinstance(name, Job) else name
+        return Build(name, number)
+
     def job_info(self, name):
         return self.job(name).info
 
@@ -294,6 +314,15 @@ class Jenkins(object):
 
     def job_builds(self, name):
         return self.job(name).builds
+
+    def job_last_build(self, name):
+        return self.job(name).last_build
+
+    def job_last_stable_build(self, name):
+        return self.job(name).last_stable_build
+
+    def job_last_successful_build(self, name):
+        return self.job(name).last_successful_build
 
     def job_create(self, name, config):
         return Job.create(name, config, self.server)
