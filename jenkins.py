@@ -88,6 +88,10 @@ class Job(object):
         try:
             self.info
             return True
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                return False
+            raise
         except JenkinsError:
             return False
 
@@ -237,15 +241,14 @@ class Server(object):
         throw and res.raise_for_status()
         return res
 
-    def json(self, url, errmsg=None, **kw):
+    def json(self, url, errmsg=None, throw=True, **kw):
         url = self.urljoin(url)
         try:
             res = requests.get(url, auth=self.auth, **kw)
+            throw and res.raise_for_status()
             if not res:
                 raise JenkinsError(errmsg)
             return res.json()
-        except HTTPError:
-            raise JenkinsError(errmsg)
         except ValueError:
             raise JenkinsError('unparsable json response')
 

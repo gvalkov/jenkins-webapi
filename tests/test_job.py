@@ -4,6 +4,7 @@ import pytest
 from . util import *
 from jenkins import Jenkins, Job, JenkinsError
 from requests import HTTPError
+from httmock import urlmatch, all_requests, HTTMock
 
 
 def test_job_exists(api, ref, tmpjob):
@@ -11,6 +12,16 @@ def test_job_exists(api, ref, tmpjob):
 
 def test_job_exists_fail(api, ref):
     assert api.job_exists('does not exist') == False
+
+def test_job_exists_auth_fail(api, ref, tmpjob):
+    @all_requests
+    def response(url, request):
+        return {'status_code': 400, 'content': 'error'}
+
+    name = tmpjob('test-1')
+    with HTTMock(response):
+        with pytest.raises(HTTPError):
+            api.job_exists(name)
 
 def test_job_create(api, ref, jobname_wf):
     api.job_create(jobname_wf, econfig_enc)

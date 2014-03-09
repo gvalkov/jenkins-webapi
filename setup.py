@@ -31,7 +31,7 @@ kw = {
     'classifiers'      : classifiers,
     'py_modules'       : ['jenkins'],
     'install_requires' : ['requests>=2.0.1'],
-    'tests_require'    : ['pytest', 'termcolor'],
+    'tests_require'    : ['pytest', 'termcolor', 'pytest-cov', 'httmock'],
     'zip_safe'         : True,
 }
 
