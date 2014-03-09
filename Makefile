@@ -35,5 +35,13 @@ stop-jenkins:
 	from subprocess import check_call as run
 	run('echo 0 | nc %s %s' % (addr, port), shell=True)
 
+test:
+	from subprocess import check_call as run
+	run('py.test tests -xvs', shell=True)
+
+coverage:
+	from subprocess import check_call as run
+	run('py.test --cov-report term-missing --cov  jenkins tests', shell=True)
+
 .ONESHELL:
 .PHONY: run-latest-jenkink
