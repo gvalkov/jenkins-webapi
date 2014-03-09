@@ -28,16 +28,8 @@ class Job(object):
         return '%s(%r)' % (cls, self.name)
 
     def _not_exist_raise(self):
-        if not self.exists():
+        if not self.exists:
             raise JenkinsError('job "%s" does not exist' % self.name)
-
-    def exists(self):
-        '''Check if job exists.'''
-        try:
-            self.info
-            return True
-        except JenkinsError:
-            return False
 
     def delete(self):
         '''Permanently remove job.'''
@@ -45,7 +37,7 @@ class Job(object):
         url = 'job/%s/doDelete' % quote(self.name)
 
         res = self.server.post(url, throw=False)
-        if self.exists():
+        if self.exists:
             raise JenkinsError('delete of job "%s" failed' % self.name)
         return res
 
@@ -89,6 +81,15 @@ class Job(object):
     @property
     def enabled(self):
         return '<disabled>false</disabled>' in self.config
+
+    @property
+    def exists(self):
+        '''Check if job exists.'''
+        try:
+            self.info
+            return True
+        except JenkinsError:
+            return False
 
     @property
     def info(self):
@@ -139,7 +140,7 @@ class Job(object):
         '''Create a new Jenkins job.'''
 
         job = cls(name, server)
-        if job.exists():
+        if job.exists:
             raise JenkinsError('job "%s" already exists' % name)
 
         headers = {'Content-Type': 'text/xml'}
@@ -151,7 +152,7 @@ class Job(object):
         else:
             res.raise_for_status()
 
-        # if not job.exists():
+        # if not job.exists:
         #     raise JenkinsError('create "%s" failed' % name, url=res.url)
 
     @classmethod
@@ -161,17 +162,17 @@ class Job(object):
         job = cls(source, server)
         newjob = cls(dest, server)
 
-        if newjob.exists():
+        if newjob.exists:
             raise JenkinsError('job "%s" already exists' % dest)
 
-        if not job.exists():
+        if not job.exists:
             raise JenkinsError('job "%s" does not exist' % source)
 
         headers = {'Content-Type': 'text/xml'}
         params = {'name': dest, 'mode': 'copy', 'from': source}
         res = server.post('createItem', params=params, headers=headers)
 
-        if not newjob.exists():
+        if not newjob.exists:
             msg = 'could not copy job "%s" to "%s"'
             raise JenkinsError(msg % (source, dest))
 
@@ -287,7 +288,7 @@ class Jenkins(object):
         return self.job(name).info
 
     def job_exists(self, name):
-        return self.job(name).exists()
+        return self.job(name).exists
 
     def job_delete(self, name):
         return self.job(name).delete()

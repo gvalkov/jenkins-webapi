@@ -24,7 +24,7 @@ Usage
    >>> j.job('master')  # get job by name
    Job('master')
 
-   >>> j.job('master').exists()
+   >>> j.job('master').exists
    >>> j.job_exists('master')
    True
 

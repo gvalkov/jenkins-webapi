@@ -29,7 +29,7 @@ def test_job_copy(api, ref):
     ref.create_job('job-copy-src', econfig_enc)
     ref.create_job('job-copy-dst-1', econfig_enc)
 
-    assert api.job_copy('job-copy-src', 'job-copy-dst').exists()
+    assert api.job_copy('job-copy-src', 'job-copy-dst').exists
     assert api.job_config('job-copy-src').strip() == api.job_config('job-copy-dst').strip()
 
     with pytest.raises(JenkinsError):
