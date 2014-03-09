@@ -14,7 +14,7 @@ Usage
 
 .. code-block:: python
 
-   >>> from jenkins import Jenkins, JenkinsError, Job
+   >>> from jenkins import Jenkins, JenkinsError, Job, Build
 
    >>> j = Jenkins('http://server:port', 'username', 'password')
 
@@ -39,6 +39,28 @@ Usage
    >>> j.job('master').build()
    >>> j.job('master').build({'option':'value'}, 'token')
 
+   >>> j.job('master').builds
+   >>> j.job_builds('master')
+   [Build(Job('master'), 1)]
+
+   >>> j.job_last_build('master')
+   >>> j.job_last_stable_build('master')
+   >>> j.job_last_successful_build('master')
+   >>> j.job('master').last_build
+   >>> j.job('master').last_stable_build
+   >>> j.job('master').last_successful_build
+   [Build(Job('master'), 1)]
+
+   >>> b = j.build('master', 1)
+   >>> b = Build(Job('master'), 1)
+
+   >>> b.info
+   {timestamp': 1394313822651, 'result': 'SUCCESS', ...}
+   >>> b.running
+   True
+   >>> b.wait()  # wait until build finishes
+   >>> b.wait(interval=5, timeout=60)
+
    >>> j.job('master').config
    >>> j.job_config('master')
    '<?xml version=\1.0\' encoding=\'UTF-8\'?>\n<projects>\n...'
@@ -56,8 +78,12 @@ Usage
    >>> copy = Job.copy('old-job', 'new-job', j)
    >>> copy = j.job_copy('old-job', 'new-job')
 
+Refer to the auto-generated :doc:`API documenation <apidoc>` for more
+information.
+
+
 Installation
-------------
+============
 
 The latest stable version of jenkins-webapi can be installed from
 pypi_, while the development version can be installed from github_:
@@ -69,7 +95,7 @@ pypi_, while the development version can be installed from github_:
 
 
 Similar projects
-----------------
+================
 
 * python-jenkins_
 * autojenkins_
@@ -77,7 +103,7 @@ Similar projects
 
 
 License
--------
+=======
 
 Jenkins-webapi is released under the terms of the `Revised BSD License`_.
 
