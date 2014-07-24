@@ -7,7 +7,7 @@ libraries:
 
 * Supports Python versions 2.6 to 3.3.
 * Has a comprehensive test suite.
-* A consice and intuitive API.
+* A concise and intuitive API.
 
 Documentation:
     http://jenkins-webapi.readthedocs.org/en/latest/
