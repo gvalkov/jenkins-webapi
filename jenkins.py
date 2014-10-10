@@ -182,6 +182,60 @@ class Job(object):
 
         return newjob
 
+class View(object):
+    '''Represents a jenkins view.'''
+
+    __slots__ = 'name', 'server'
+
+    def __init__(self, name, server):
+        self.name = name
+        self.server = server
+
+    def __str__(self):
+        return 'job:%r' % (self.name)
+
+    def __repr__(self):
+        cls = self.__class__.__name__
+        return '%s(%r)' % (cls, self.name)
+
+    def _not_exist_raise(self):
+        if not self.exists:
+            raise JenkinsError('job "%s" does not exist' % self.name)
+
+    @property
+    def exists(self):
+        '''Check if view exists.'''
+        try:
+            self.info
+            return True
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                return False
+            raise
+        except JenkinsError:
+            return False
+
+    @property
+    def info(self):
+        url = 'view/%s/api/json?depth=0' % quote(self.name)
+        err = 'view "%s" does not exist' % self.name
+        return self.server.json(url, errmsg=err)
+
+    def addJob(self, job):
+        '''Add job to the view.'''
+
+        if not self.exists:
+            raise JenkinsError('view "%s" does not exist' % self.name)
+
+        if not job.exists:
+            raise JenkinsError('job "%s" does not exist' % job.name)
+
+        params = {'name': job.name}
+        res = self.server.post('addJobToView', params=params)
+
+        if not res.status_code == 200:
+            msg = 'could not add job "%s" to view "%s"'
+            raise JenkinsError(msg % (job.name, self.name))
 
 class Build(object):
     '''A representation of a Jenkins build.'''
