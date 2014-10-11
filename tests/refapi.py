@@ -1,9 +1,13 @@
+# -*- coding: utf-8; -*-
+
 from subprocess import STDOUT,  PIPE, Popen, CalledProcessError
-from . util import *
-
-__all__ = ['JenkinsCLI']
+from . utils import *
 
 
+__all__ = 'JenkinsCLI'
+
+
+#-----------------------------------------------------------------------------
 class JenkinsCLI(object):
     def __init__(self, url, jar, use_drip=False):
         self.url = url

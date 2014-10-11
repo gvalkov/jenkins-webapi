@@ -1,3 +1,5 @@
+# -*- coding: utf-8; -*-
+
 import os
 import time
 import textwrap
@@ -5,13 +7,14 @@ import contextlib
 
 from os.path import abspath, dirname, join as pjoin
 from subprocess import STDOUT, Popen, CalledProcessError, call, check_call
-from tests.util import *
+from . utils import *
 
 
 __all__ = ['JenkinsInstall']
 
 
-class JenkinsInstall(object):
+#-----------------------------------------------------------------------------
+class JenkinsInstall:
     def __init__(self, url, destdir, addr, port, cport, logfile=None):
         self.url = url
         self.port = port
@@ -19,10 +22,10 @@ class JenkinsInstall(object):
         self.addr = addr
         self.destdir = destdir
 
-        self.logfile = logfile if logfile else pjoin(self.destdir, 'jenkins.log')
+        self.logfile    = logfile if logfile else pjoin(self.destdir, 'jenkins.log')
         self.jenkinswar = pjoin(self.destdir, 'jenkins.war')
         self.jenkinscli = pjoin(self.destdir, 'jenkins-cli.jar')
-        self.homedir = pjoin(self.destdir, 'home')
+        self.homedir    = pjoin(self.destdir, 'home')
 
         self.proc = None
 
@@ -37,6 +40,7 @@ class JenkinsInstall(object):
         destdir: %(destdir)s
         cport:   %(cport)s
         ''' % self.__dict__
+
         green(msg1)
         print(textwrap.dedent(msg2))
 
