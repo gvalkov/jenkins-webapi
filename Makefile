@@ -44,4 +44,4 @@ coverage:
 	run('py.test --cov-report term-missing --cov  jenkins tests', shell=True)
 
 .ONESHELL:
-.PHONY: run-latest-jenkink
+.PHONY: start-jenkins stop-jenkins test coverage remove-jobs
