@@ -9,8 +9,7 @@ from subprocess import STDOUT, PIPE, Popen, CalledProcessError, list2cmdline
 from . utils import *
 
 
-__all__ = 'JenkinsCLI', 'JenkinsCLIPersist'
-
+__all__ = 'JenkinsCLI'
 
 #-----------------------------------------------------------------------------
 class ReferenceAPI(object):
