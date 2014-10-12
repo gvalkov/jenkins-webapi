@@ -1,20 +1,50 @@
 # -*- coding: utf-8; -*-
 
-from subprocess import STDOUT,  PIPE, Popen, CalledProcessError
-from . utils import *
+import os, fcntl
+
+from abc import ABCMeta, abstractmethod
+from select import select
+from subprocess import STDOUT, PIPE, Popen, CalledProcessError, list2cmdline
+
+from utils import *
 
 
-__all__ = 'JenkinsCLI'
+__all__ = 'JenkinsCLI', 'JenkinsCLIPersist'
 
 
 #-----------------------------------------------------------------------------
-class JenkinsCLI(object):
-    def __init__(self, url, jar, use_drip=False):
-        self.url = url
-        self.jar = jar
+class ReferenceAPI(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def list_jobs(self):
+        pass
+
+    @abstractmethod
+    def delete_job(self, name):
+        pass
+
+    @abstractmethod
+    def create_job(self, name, configxml):
+        pass
+
+    @abstractmethod
+    def job_exists(self, name):
+        pass
+
+    @abstractmethod
+    def disable_job(self, name):
+        pass
+
+    @abstractmethod
+    def enable_job(self, name):
+        pass
+
+
+#-----------------------------------------------------------------------------
+class JenkinsCLI(ReferenceAPI):
+    def __init__(self, url, jar):
         self.cmd = ['java', '-jar', jar, '-s', url]
-        if use_drip:
-            self.cmd = [pjoin(here, 'bin/drip'), '-cp', jar, 'hudson.cli.CLI', '-s', url]
 
     def run(self, cmd, success_codes=[0], **kw):
         print('%s' % ' '.join(cmd))
@@ -61,3 +91,94 @@ class JenkinsCLI(object):
         green('\nEnabling job "%s" with jenkins-cli' % name)
         cmd = self.cmd + ['enable-job', name]
         return self.run(cmd)
+
+# #-----------------------------------------------------------------------------
+# class JenkinsCLIPersist(ReferenceAPI):
+#     def __init__(self, url, jar):
+#         self.url = url
+#         self.jar = jar
+#         self.exitsep = '### EXIT STATUS: '
+
+#         cmd = ['java', '-cp', '%s:%s' % (jar, 'bin'), 'JenkinsCLIPersist']
+#         # self.proc = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+#         self.proc = Popen(cmd, stdin=PIPE)
+
+#         # fl = fcntl.fcntl(self.proc.stdout, fcntl.F_GETFL)
+#         # fcntl.fcntl(self.proc.stdout, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+
+#     def close(self):
+#         self.proc.stdin.close()
+
+#     def read(self):
+#         lines = []
+#         while True:
+#             r, w, e = select([self.proc.stdout], [], [])
+#             if r:
+#                 line = self.proc.stdout.read(512)
+#                 line = line.decode('utf8').strip()
+
+#                 if self.exitsep in line:
+#                     ret = line.split(self.exitsep)[1]
+#                     ret = int(ret) & 0xFF
+#                     return lines, ret
+
+#                 if line:
+#                     lines.append(line)
+
+#     def run(self, *cmd, stdin=None, success_codes=[0]):
+#         cmd = ['-noKeyAuth', '-s', self.url] + list(cmd)
+#         cmd = (list2cmdline(cmd) + '\n').encode('utf8')
+#         self.proc.stdin.write(cmd)
+#         self.proc.stdin.flush()
+
+#         if stdin:
+#             self.proc.stdin.write(stdin.encode('utf8'))
+#             self.proc.stdin.flush()
+
+#         lines, ret = self.read()
+#         if ret not in success_codes:
+#             self.proc.stdin.close()
+#             raise CalledProcessError(ret, str(cmd))
+
+#         return lines, ret
+
+#     def list_jobs(self):
+#         lines, ret = self.run('list-jobs')
+#         return lines
+
+#     def delete_job(self, name):
+#         lines, ret = self.run('delete-job', name, success_codes=[0, 255])
+#         return lines
+
+#     def create_job(self, name, configxml):
+#         lines, ret = self.run('create-job', name, stdin=configxml)
+#         return lines
+
+#     def job_exists(self, name):
+#         try:
+#             lines, ret = self.run('get-job', name)
+#             return True
+#         except CalledProcessError:
+#             return False
+
+#     def disable_job(self, name):
+#         lines, ret = self.run('disable-job', name)
+#         return lines
+
+#     def enable_job(self, name):
+#         lines, ret = self.run('enable-job', name)
+#         return lines
+
+
+# if __name__ == '__main__':
+#     c = open('/home/gv/source/github/jenkins-webapi/tests/etc/empty-job-config.xml').read()
+#     cli = JenkinsCLIPersist('http://localhost:60888', '/home/gv/source/github/jenkins-webapi/tests/tmp/latest/jenkins-cli.jar')
+
+#     # print(cli.list_jobs())
+#     # print(cli.job_exists('job-copy-dst'))
+#     # print(cli.disable_job('job-copy-dst'))
+#     # print(cli.enable_job('job-copy-dst'))
+#     cli.create_job('new-job', c)
+#     # print(cli.list_jobs())
+#     cli.close()
+#     cli.proc.wait()

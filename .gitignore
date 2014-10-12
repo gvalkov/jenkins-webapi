@@ -13,11 +13,12 @@ pip-log.txt
 .coverage
 .ropeproject
 tags
-doc/_build
-tests/tmp/
 .tox/
-doc/_build
 __pycache__/
 htmlcov/
 *,cover
 TAGS
+
+doc/_build
+tests/tmp/
+tests/bin/jenkins-cli-persist/JenkinsCLIPersist.class
