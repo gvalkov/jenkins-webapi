@@ -405,9 +405,14 @@ class JenkinsError(Exception):
         self.msg = msg
 
 
+#-----------------------------------------------------------------------------
 ## uncomment to enable http logging
-# import logging, httplib
-# httplib.HTTPConnection.debuglevel = 1
+# try:
+#     import logging, httplib
+#     httplib.HTTPConnection.debuglevel = 1
+# except ImportError:
+#     import logging, http.client
+#     http.client.HTTPConnection.debuglevel = 1
 # logging.basicConfig()
 # logging.getLogger().setLevel(logging.DEBUG)
 # requests_log = logging.getLogger('requests.packages.urllib3')
