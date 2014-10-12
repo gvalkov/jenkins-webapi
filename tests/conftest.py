@@ -1,3 +1,4 @@
+import re
 import time
 import pytest
 
@@ -95,7 +96,7 @@ def jobname_gc(jobname, ref, request):
 # A temporary job using the jobname fixture and the reference api.
 @pytest.fixture(scope='function')
 def tmpjob_named(jobname, ref, request):
-    ref.create_job(jobname, econfig_enc)
+    ref.create_job(jobname, job_config_enc)
     finalizer = partial(ref.delete_job, jobname)
     request.addfinalizer(finalizer)
     return jobname
@@ -108,15 +109,36 @@ def tmpjob(ref, request):
     request.addfinalizer(tmp.finalize)
     return tmp
 
+@pytest.fixture(scope='function')
+def tmpview(ref, request):
+    tmp = TempView(ref)
+    request.addfinalizer(tmp.finalize)
+    return tmp
+
 class TempJob:
     def __init__(self, ref):
         self.ref = ref
 
-    def __call__(self, name, config=econfig_enc):
+    def __call__(self, name, config=job_config_enc):
         self.name = name
         self.ref.create_job(name, config)
         return name
 
     def finalize(self):
         self.ref.delete_job(self.name)
+        time.sleep(0.1)
+
+class TempView:
+    def __init__(self, ref):
+        self.ref = ref
+
+    def __call__(self, name, config=view_config):
+        config = re.sub('<name>.*</name>', '<name>%s</name>' % name, config)
+        config = config.encode('utf8')
+        self.name = name
+        self.ref.create_view(config)
+        return name
+
+    def finalize(self):
+        self.ref.delete_view(self.name)
         time.sleep(0.1)

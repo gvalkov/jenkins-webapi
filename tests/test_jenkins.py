@@ -33,7 +33,7 @@ def test_job_exists_auth_fail(api, ref, tmpjob):
 
 #-----------------------------------------------------------------------------
 def test_job_create(api, ref, jobname_gc):
-    api.job_create(jobname_gc, econfig_enc)
+    api.job_create(jobname_gc, job_config_enc)
     time.sleep(1)
     assert ref.job_exists(jobname_gc)
 
@@ -41,15 +41,15 @@ def test_job_create_fail(api, ref, jobname):
     with pytest.raises(JenkinsError):
         api.job_create(jobname, 'not xml')
 
-    ref.create_job(jobname, econfig_enc)
+    ref.create_job(jobname, job_config_enc)
     with pytest.raises(JenkinsError):
-        api.job_create(jobname, econfig_enc)
+        api.job_create(jobname, job_config_enc)
 
 
 #-----------------------------------------------------------------------------
 def test_job_copy(api, ref):
-    ref.create_job('job-copy-src', econfig_enc)
-    ref.create_job('job-copy-dst-1', econfig_enc)
+    ref.create_job('job-copy-src', job_config_enc)
+    ref.create_job('job-copy-dst-1', job_config_enc)
 
     assert api.job_copy('job-copy-src', 'job-copy-dst').exists
     assert api.job_config('job-copy-src').strip() == api.job_config('job-copy-dst').strip()
@@ -60,7 +60,7 @@ def test_job_copy(api, ref):
 
 #-----------------------------------------------------------------------------
 def test_job_delete(api, ref, jobname):
-    ref.create_job(jobname, econfig_enc)
+    ref.create_job(jobname, job_config_enc)
     try:
         api.job_delete(jobname)
         assert True
@@ -79,3 +79,31 @@ def test_job_disable(api, ref, tmpjob_named):
     ref.enable_job(tmpjob_named)
     api.job_disable(tmpjob_named)
     assert not Job(tmpjob_named, api.server).enabled
+
+
+#-----------------------------------------------------------------------------
+def test_view_exists(api, ref, tmpview):
+    view = tmpview('Test')
+    assert api.view_exists('Test')
+    assert not api.view_exists('NoTest')
+
+def test_view_add_remove_job(api, ref, tmpjob, tmpview):
+    view = tmpview('Test')
+    job = tmpjob('job-abc')
+
+    api.view_add_job(view, job)
+    assert '<string>job-abc</string>' in api.view_config(view)
+
+    api.view_remove_job(view, job)
+    assert '<string>job-abc</string>' not in api.view_config(view)
+
+# def test_view_create(api, ref):
+#     api.view_create(view_config_enc)
+#     assert ref.view_exists('Test')
+
+# def test_view_remove(api, ref, tmpview):
+#     view = tmpview('Test')
+#     tmpview.finalize = lambda *x: x
+#     assert api.view_exists('Test')
+#     api.view_delete('Test')
+#     assert not api.view_exists('Test')

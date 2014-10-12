@@ -7,7 +7,7 @@ libraries:
 
 * Supports Python versions 2.6 to 3.3.
 * Has a comprehensive test suite.
-* A consice and intuitive API.
+* A concise and intuitive API.
 
 Usage
 =====
@@ -77,6 +77,16 @@ Usage
 
    >>> copy = Job.copy('old-job', 'new-job', j)
    >>> copy = j.job_copy('old-job', 'new-job')
+
+   >>> View('view-name').config
+   >>> j.view_config('view-name')
+   '<?xml version=\1.0\' encoding=\'UTF-8\'?>\n...'
+
+   >>> View('view-name').add_job('job-name')
+   >>> j.view_add_job('view-name', 'job-name')
+
+   >>> View('view-name').remove_job('job-name')
+   >>> j.view_remove_job('view-name', 'job-name')
 
 Refer to the auto-generated :doc:`API documenation <apidoc>` for more
 information.

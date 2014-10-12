@@ -9,10 +9,15 @@ from termcolor import colored, cprint
 #-----------------------------------------------------------------------------
 here = abspath(dirname(__file__))
 
-# a minimal config.xml
-econfig_fn = pjoin(here, 'etc/empty-job-config.xml')
-econfig = open(econfig_fn).read()
-econfig_enc = econfig.encode('utf8')
+# a minimal job config.xml
+job_config_fn = pjoin(here, 'etc/empty-job-config.xml')
+job_config = open(job_config_fn).read()
+job_config_enc = job_config.encode('utf8')
+
+# a minimal view config.xml
+view_config_fn = pjoin(here, 'etc/empty-view-config.xml')
+view_config = open(view_config_fn).read()
+view_config_enc = view_config.encode('utf8')
 
 # output functions
 green = lambda x: cprint(x, 'green')

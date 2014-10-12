@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8; -*-
 
 import time
 import requests
@@ -8,11 +9,13 @@ from requests.compat import quote
 from requests.auth import HTTPBasicAuth
 
 
+#-----------------------------------------------------------------------------
 __all__ = 'Job', 'Jenkins', 'Server', 'JenkinsError', 'Build'
 
 
+#-----------------------------------------------------------------------------
 class Job(object):
-    '''Represents a jenkins job.'''
+    '''Represents a Jenkins job.'''
 
     __slots__ = 'name', 'server'
 
@@ -106,7 +109,7 @@ class Job(object):
         url = 'job/%s/config.xml' % quote(self.name)
         res = self.server.get(url)
         if res.status_code != 200 or res.headers.get('content-type', '') != 'application/xml':
-            msg = 'fetching configuration for job "%s" did not return a xml document'
+            msg = 'fetching configuration for job "%s" did not return an xml document'
             raise JenkinsError(msg % self.name)
         return res.text
 
@@ -182,8 +185,10 @@ class Job(object):
 
         return newjob
 
+
+#-----------------------------------------------------------------------------
 class View(object):
-    '''Represents a jenkins view.'''
+    '''Represents a Jenkins view.'''
 
     __slots__ = 'name', 'server'
 
@@ -192,7 +197,7 @@ class View(object):
         self.server = server
 
     def __str__(self):
-        return 'job:%r' % (self.name)
+        return 'view:%r' % self.name
 
     def __repr__(self):
         cls = self.__class__.__name__
@@ -200,7 +205,7 @@ class View(object):
 
     def _not_exist_raise(self):
         if not self.exists:
-            raise JenkinsError('job "%s" does not exist' % self.name)
+            raise JenkinsError('view "%s" does not exist' % self.name)
 
     @property
     def exists(self):
@@ -221,7 +226,42 @@ class View(object):
         err = 'view "%s" does not exist' % self.name
         return self.server.json(url, errmsg=err)
 
-    def addJob(self, job):
+    @property
+    def config(self):
+        url = 'view/%s/config.xml' % quote(self.name)
+        res = self.server.get(url)
+        if res.status_code != 200 or res.headers.get('content-type', '') != 'application/xml':
+            msg = 'fetching configuration for view "%s" did not return an xml document'
+            raise JenkinsError(msg % self.name)
+        return res.text
+
+    def reconfigure(self, newconfig):
+        '''Update the config.xml of an existing view.'''
+        self._not_exist_raise()
+
+        url = 'view/%s/config.xml' % self.name
+        headers = {'Content-Type': 'text/xml'}
+        params = {'name': self.name}
+        return self.server.post(url, data=newconfig, params=params, headers=headers)
+
+    def remove_job(self, job):
+        '''Remove job from view.'''
+
+        if not self.exists:
+            raise JenkinsError('view "%s" does not exist' % self.name)
+
+        if not job.exists:
+            raise JenkinsError('job "%s" does not exist' % job.name)
+
+        url = 'view/%s/removeJobFromView' % self.name
+        params = {'name': job.name}
+        res = self.server.post(url, params=params)
+
+        if not res.status_code == 200:
+            msg = 'could not remove job "%s" from view "%s"'
+            raise JenkinsError(msg % (job.name, self.name))
+
+    def add_job(self, job):
         '''Add job to the view.'''
 
         if not self.exists:
@@ -230,13 +270,16 @@ class View(object):
         if not job.exists:
             raise JenkinsError('job "%s" does not exist' % job.name)
 
+        url = 'view/%s/addJobToView' % self.name
         params = {'name': job.name}
-        res = self.server.post('addJobToView', params=params)
+        res = self.server.post(url, params=params)
 
         if not res.status_code == 200:
             msg = 'could not add job "%s" to view "%s"'
             raise JenkinsError(msg % (job.name, self.name))
 
+
+#-----------------------------------------------------------------------------
 class Build(object):
     '''A representation of a Jenkins build.'''
 
@@ -273,6 +316,7 @@ class Build(object):
                 break
 
 
+#-----------------------------------------------------------------------------
 class Server(object):
     def __init__(self, url, username=None, password=None):
         self.url = url if url.endswith('/') else url + '/'
@@ -307,6 +351,7 @@ class Server(object):
             raise JenkinsError('unparsable json response')
 
 
+#-----------------------------------------------------------------------------
 class Jenkins(object):
     def __init__(self, url, username=None, password=None):
         '''Create handle to Jenkins instance.'''
@@ -333,14 +378,19 @@ class Jenkins(object):
     def jobnames(self):
         return [i['name'] for i in self.info['jobs']]
 
-    # alternative job and build api
+    #-------------------------------------------------------------------------
+    # alternative job, view and build api
     def job(self, name):
         return Job(name, self.server)
+
+    def view(self, name):
+        return View(name, self.server)
 
     def build(self, name, number):
         name = name.name if isinstance(name, Job) else name
         return Build(name, number)
 
+    #-------------------------------------------------------------------------
     def job_info(self, name):
         return self.job(name).info
 
@@ -388,6 +438,21 @@ class Jenkins(object):
     def job_copy(self, source, dest):
         return Job.copy(source, dest, self.server)
 
+    #-------------------------------------------------------------------------
+    def view_exists(self, name):
+        return self.view(name).exists
+
+    def view_config(self, name):
+        return self.view(name).config
+
+    def view_add_job(self, name, job_name):
+        job = self.job(job_name)
+        return self.view(name).add_job(job)
+
+    def view_remove_job(self, name, job_name):
+        job = self.job(job_name)
+        return self.view(name).remove_job(job)
+
     job_exists.__doc__ = Job.exists.__doc__
     job_delete.__doc__ = Job.delete.__doc__
     job_enable.__doc__ = Job.enable.__doc__
@@ -397,6 +462,12 @@ class Jenkins(object):
     job_create.__doc__ = Job.create.__doc__
     job_copy.__doc__ = Job.copy.__doc__
 
+    view_exists.__doc__ = View.exists.__doc__
+    view_add_job.__doc__ = View.add_job.__doc__
+    view_remove_job.__doc__ = View.remove_job.__doc__
+
+
+#-----------------------------------------------------------------------------
 class JenkinsError(Exception):
     '''Exception type for Jenkins-API related failures.'''
 
