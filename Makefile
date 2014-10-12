@@ -28,7 +28,7 @@ remove-jobs:
 	cli = JenkinsCLI(url, '$(JENKINS_CLI_JAR)')
 
 	for job in cli.list_jobs():
-		cli.delete_job(job)
+	    cli.delete_job(job)
 
 stop-jenkins:
 	addr, port = '$(JENKINS_ADDR)', $(JENKINS_CPORT)
