@@ -20,7 +20,7 @@ classifiers = [
 
 kw = {
     'name':             'jenkins-webapi',
-    'version':          '0.2.0',
+    'version':          '0.3.0',
     'description':      'Module for interacting with the Jenkins CI server',
     'long_description': open('README.rst').read(),
     'author':           'Georgi Valkov',
