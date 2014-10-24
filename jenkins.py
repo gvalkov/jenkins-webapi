@@ -10,7 +10,7 @@ from requests.auth import HTTPBasicAuth
 
 
 #-----------------------------------------------------------------------------
-__all__ = 'Job', 'Jenkins', 'Server', 'JenkinsError', 'Build'
+__all__ = 'Job', 'Jenkins', 'Server', 'JenkinsError', 'Build', 'View'
 
 
 #-----------------------------------------------------------------------------
