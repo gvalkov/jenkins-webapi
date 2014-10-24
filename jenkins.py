@@ -118,6 +118,18 @@ class Job(object):
         self.reconfigure(newconfig)
 
     @property
+    def config_etree(self):
+        # The cost of `'lxml' in sys.modules' is negligible and is
+        # preferable to having a hard dependency on lxml.
+        from lxml import etree
+        return etree.fromstring(self.config)
+
+    @config_etree.setter
+    def config_etree(self, newconfig):
+        newconfig = newconfig.tostring(etree)
+        self.reconfigure(newconfig)
+
+    @property
     def builds(self):
         return [Build(self, i['number']) for i in self.info['builds']]
 
@@ -234,6 +246,22 @@ class View(object):
             msg = 'fetching configuration for view "%s" did not return an xml document'
             raise JenkinsError(msg % self.name)
         return res.text
+
+    @config.setter
+    def config(self, newconfig):
+        self.reconfigure(newconfig)
+
+    @property
+    def config_etree(self):
+        # The cost of `'lxml' in sys.modules' is negligible and is
+        # preferable to having a hard dependency on lxml.
+        from lxml import etree
+        return etree.fromstring(self.config)
+
+    @config_etree.setter
+    def config_etree(self, newconfig):
+        newconfig = newconfig.tostring(etree)
+        self.reconfigure(newconfig)
 
     def reconfigure(self, newconfig):
         '''Update the config.xml of an existing view.'''
@@ -417,6 +445,14 @@ class Jenkins(object):
         job.config = newconfig
         return job
 
+    def job_config_etree(self, name):
+        return self.job(name).config_etree
+
+    def job_reconfigure_etree(self, name, newconfig):
+        job = self.job(name)
+        job.config_etree = newconfig
+        return job
+
     def job_build(self, name, parameters=None, token=None):
         return self.job(name).build(parameters, token)
 
@@ -444,6 +480,19 @@ class Jenkins(object):
 
     def view_config(self, name):
         return self.view(name).config
+
+    def view_reconfigure(self, name, newconfig):
+        view = self.view(name)
+        view.config = newconfig
+        return view
+
+    def view_config_etree(self, name):
+        return self.view(name).config_etree
+
+    def view_reconfigure_etree(self, name, newconfig):
+        view = self.view(name)
+        view.config_etree = newconfig
+        return view
 
     def view_add_job(self, name, job_name):
         job = self.job(job_name)
