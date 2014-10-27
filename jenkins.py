@@ -306,6 +306,23 @@ class View(object):
             msg = 'could not add job "%s" to view "%s"'
             raise JenkinsError(msg % (job.name, self.name))
 
+    @classmethod
+    def create(cls, name, configxml, server):
+        '''Create a new Jenkins view.'''
+
+        view = cls(name, server)
+        if view.exists:
+            raise JenkinsError('view "%s" already exists' % name)
+
+        headers = {'Content-Type': 'text/xml'}
+        params = {'name': name}
+        res = server.post('createView', data=configxml, params=params, headers=headers, throw=False)
+
+        if not res or res.status_code != 200:
+            raise JenkinsError('create "%s" failed' % name)
+        else:
+            res.raise_for_status()
+
 
 #-----------------------------------------------------------------------------
 class Build(object):
@@ -502,6 +519,9 @@ class Jenkins(object):
         job = self.job(job_name)
         return self.view(name).remove_job(job)
 
+    def view_create(self, name, config):
+        return View.create(name, config, self.server)
+
     job_exists.__doc__ = Job.exists.__doc__
     job_delete.__doc__ = Job.delete.__doc__
     job_enable.__doc__ = Job.enable.__doc__
@@ -514,6 +534,7 @@ class Jenkins(object):
     view_exists.__doc__ = View.exists.__doc__
     view_add_job.__doc__ = View.add_job.__doc__
     view_remove_job.__doc__ = View.remove_job.__doc__
+    view_create.__doc__ = View.create.__doc__
 
 
 #-----------------------------------------------------------------------------
@@ -526,7 +547,7 @@ class JenkinsError(Exception):
 
 
 #-----------------------------------------------------------------------------
-## uncomment to enable http logging
+# uncomment to enable http logging
 # try:
 #     import logging, httplib
 #     httplib.HTTPConnection.debuglevel = 1
