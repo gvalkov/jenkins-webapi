@@ -502,6 +502,19 @@ class Jenkins(object):
         return Job.copy(source, dest, self.server)
 
     #-------------------------------------------------------------------------
+    def build_info(self, job, number):
+        return self.build(job, number).info
+
+    def build_isbuilding(self, job, number):
+        return self.build(job, number).building
+
+    def build_stop(self, job, number):
+        return self.build(job, number).stop()
+
+    def build_wait(self, job, number, interval=1, timeout=None):
+        return self.build(job, number).wait()
+
+    #-------------------------------------------------------------------------
     def view_exists(self, name):
         return self.view(name).exists
 
@@ -543,6 +556,9 @@ class Jenkins(object):
     job_build.__doc__ = Job.build.__doc__
     job_create.__doc__ = Job.create.__doc__
     job_copy.__doc__ = Job.copy.__doc__
+
+    build_stop.__doc__ = Build.stop.__doc__
+    build_wait.__doc__ = Build.wait.__doc__
 
     view_exists.__doc__ = View.exists.__doc__
     view_add_job.__doc__ = View.add_job.__doc__
