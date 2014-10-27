@@ -122,7 +122,7 @@ class Job(object):
         # The cost of `'lxml' in sys.modules' is negligible and is
         # preferable to having a hard dependency on lxml.
         from lxml import etree
-        return etree.fromstring(self.config)
+        return etree.fromstring(self.config.encode('utf8'))
 
     @config_etree.setter
     def config_etree(self, newconfig):
@@ -256,7 +256,7 @@ class View(object):
         # The cost of `'lxml' in sys.modules' is negligible and is
         # preferable to having a hard dependency on lxml.
         from lxml import etree
-        return etree.fromstring(self.config)
+        return etree.fromstring(self.config.encode('utf8'))
 
     @config_etree.setter
     def config_etree(self, newconfig):
@@ -336,7 +336,7 @@ class View(object):
 
 #-----------------------------------------------------------------------------
 class Build(object):
-    '''A representation of a Jenkins build.'''
+    '''Represents a Jenkins build.'''
 
     __slots__ = 'job', 'number'
 
