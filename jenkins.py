@@ -263,6 +263,16 @@ class View(object):
         newconfig = newconfig.tostring(etree)
         self.reconfigure(newconfig)
 
+    def delete(self):
+        '''Permanently remove view.'''
+        self._not_exist_raise()
+        url = 'view/%s/doDelete' % quote(self.name)
+
+        res = self.server.post(url, throw=False)
+        if self.exists:
+            raise JenkinsError('delete of view "%s" failed' % self.name)
+        return res
+
     def reconfigure(self, newconfig):
         '''Update the config.xml of an existing view.'''
         self._not_exist_raise()
@@ -506,6 +516,9 @@ class Jenkins(object):
     def view_config_etree(self, name):
         return self.view(name).config_etree
 
+    def view_delete(self, name):
+        return self.view(name).delete()
+
     def view_reconfigure_etree(self, name, newconfig):
         view = self.view(name)
         view.config_etree = newconfig
@@ -535,6 +548,7 @@ class Jenkins(object):
     view_add_job.__doc__ = View.add_job.__doc__
     view_remove_job.__doc__ = View.remove_job.__doc__
     view_create.__doc__ = View.create.__doc__
+    view_delete.__doc__ = View.delete.__doc__
 
 
 #-----------------------------------------------------------------------------
