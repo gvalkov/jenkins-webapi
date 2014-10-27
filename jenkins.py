@@ -362,11 +362,11 @@ class Build(object):
         url = 'job/%s/%d/stop' % (self.job.name, self.number)
         return self.job.server.post(url)
 
-    def wait(self, interval=1, timeout=None):
+    def wait(self, tick=1, timeout=None):
         '''Wait for build to complete.'''
         start = time.time()
         while self.building:
-            time.sleep(interval)
+            time.sleep(tick)
             if timeout and (time.time() - start) > timeout:
                 break
 

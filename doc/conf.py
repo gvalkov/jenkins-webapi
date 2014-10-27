@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import sys, os
-sys.path.insert(0, os.path.abspath('..'))
-from setup import kw
+import os, re
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -16,7 +14,14 @@ master_doc = 'index'
 project = u'jenkins-webapi'
 copyright = u'2013-2014, Georgi Valkov'
 
-release = kw['version']
+
+# read version from setup.py
+for line in open('../setup.py'):
+    m = re.search("'version':.*'(.*)'", line)
+    if m:
+        release = m.group(1)
+        break
+
 version = release
 
 exclude_patterns = ['_build']
@@ -40,17 +45,12 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
-if not on_rtd:
-    import sphinx_rtd_theme
-    html_theme = 'sphinx_rtd_theme'
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-else:
-    html_theme = 'default'
+html_theme = 'haiku'
 
 #html_theme_options = {}
 #html_theme_path = []
-#html_title = None
-#html_short_title = None
+html_title = 'Jenkins-webapi'
+html_short_title = 'jenkinw-webapi'
 #html_logo = None
 #html_favicon = None
 html_static_path = ['_static']

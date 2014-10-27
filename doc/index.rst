@@ -1,107 +1,138 @@
-Introduction
-============
+Jenkins-webapi
+--------------
 
-Jenkins-webapi is a library for programatically accessing Jenkins'
-remote web API_. It has the following advantages over other similar
-libraries:
+Jenkins-webapi is a small, no-frills, Python module for working with
+the Jenkins remote access API_. What it brings to the table is:
 
-* Supports Python versions 2.6 to 3.3.
-* Has a comprehensive test suite.
+* Support for Python versions *2.6*, *2.7*, *3.3* and *3.4*.
+* A comprehensive test suite.
 * A concise and intuitive API.
 
-Usage
-=====
+Quick Start
+===========
+
+**Installing:**
+
+The latest stable version of *jenkins-webapi* can be installed from
+pypi_:
+
+.. code-block:: bash
+
+    $ pip install jenkins-webapi
+
+Alternatively, you may simply put the `jenkins.py`_ module in your
+load path - *jenkins-webapi* depends only on the requests_ http client
+library.
+
+**Connecting to Jenkins:**
 
 .. code-block:: python
 
-   >>> from jenkins import Jenkins, JenkinsError, Job, Build
-
+   >>> from jenkins import Jenkins, JenkinsError
    >>> j = Jenkins('http://server:port', 'username', 'password')
 
+**Working with jobs:**
+
+.. code-block:: python
+
    >>> j.jobs
-   [Job('master'), Job('develop'), Job('feature/one')]
+   [Job('master'), Job('develop'), Job('feature-one')]
 
-   >>> j.job('master')  # get job by name
-   Job('master')
-
-   >>> j.job('master').exists
    >>> j.job_exists('master')
    True
 
-   >>> j.job('master').disable()
-   >>> j.job_disable('master')
-
-   >>> j.job('master').enabled
    >>> j.job_enabled('master')
    False
 
-   >>> j.job_build('master')
-   >>> j.job('master').build()
-   >>> j.job('master').build({'option':'value'}, 'token')
+   >>> j.job_info('master')
+   {'actions': [], 'buildable': False, 'builds': [], ...}
 
-   >>> j.job('master').builds
+   >>> j.job_config('master')
+   '<?xml version=\1.0\' encoding=\'UTF-8\'?>\n<projects>\n...'
+
+   >>> j.job_config_etree('master')
+   <Element project at 0x7fc4f564ab08>
+
+   >>> j.job_disable('master')
+   >>> j.job_enable('master')
+
+   >>> j.job_build('master')
+   >>> j.job_build('master', {'option': 'value'}, 'token')
+
+   >>> j.job_create('new-job', configxml)
+   >>> j.job_copy('old-job', 'new-job')
+   >>> j.job_reconfigure('master', configxml)
+   >>> j.job_reconfigure_etree('master', config_etree)
+
+
+**Working with views:**
+
+.. code-block:: python
+
+   >>> j.view_create('view-name', configxml)
+
+   >>> j.view_exists('view-name')
+   >>> j.view_delete('view-name')
+
+   >>> j.view_config('view-name')
+   >>> j.view_config_etree('view-name')
+
+   >>> j.view_reconfigure('view-name', configxml)
+   >>> j.view_reconfigure_etree('view-name', config_etree)
+
+   >>> j.view_add_job('view-name', 'job-name')
+   >>> j.view_remove_job('view-name', 'job-name')
+
+
+**Working with builds:**
+
+.. code-block:: python
+
    >>> j.job_builds('master')
    [Build(Job('master'), 1)]
 
    >>> j.job_last_build('master')
    >>> j.job_last_stable_build('master')
    >>> j.job_last_successful_build('master')
-   >>> j.job('master').last_build
-   >>> j.job('master').last_stable_build
-   >>> j.job('master').last_successful_build
    [Build(Job('master'), 1)]
 
-   >>> b = j.build('master', 1)
-   >>> b = Build(Job('master'), 1)
-
-   >>> b.info
+   >>> j.build_info('master', 1)
    {timestamp': 1394313822651, 'result': 'SUCCESS', ...}
-   >>> b.running
+
+   >>> j.build_running('master', 1)
    True
-   >>> b.wait()  # wait until build finishes
-   >>> b.wait(interval=5, timeout=60)
 
-   >>> j.job('master').config
-   >>> j.job_config('master')
-   '<?xml version=\1.0\' encoding=\'UTF-8\'?>\n<projects>\n...'
-
-   >>> j.job('master').config = newconfigxml
-   >>> j.job_reconfigure('master', newconfigxml)
-
-   >>> j.job('master').info
-   >>> j.job_info('master')
-   {'actions': [], 'buildable': False, 'builds': [], ...}
-
-   >>> new = Job.create('new-job', configxml, j)
-   >>> new = j.job_create('new-job', configxml)
-
-   >>> copy = Job.copy('old-job', 'new-job', j)
-   >>> copy = j.job_copy('old-job', 'new-job')
-
-   >>> View('view-name').config
-   >>> j.view_config('view-name')
-   '<?xml version=\1.0\' encoding=\'UTF-8\'?>\n...'
-
-   >>> View('view-name').add_job('job-name')
-   >>> j.view_add_job('view-name', 'job-name')
-
-   >>> View('view-name').remove_job('job-name')
-   >>> j.view_remove_job('view-name', 'job-name')
-
-Refer to the auto-generated :doc:`API documenation <apidoc>` for more
-information.
+   >>> j.build_wait()
+   >>> j.build_wait(interval=5, timeout=60)
 
 
-Installation
-============
+**Job objects:**
 
-The latest stable version of jenkins-webapi can be installed from
-pypi_, while the development version can be installed from github_:
+   >>> master = j.job('master')
+   >>> master.name
+   >>> master.info
+   >>> master.config
+   >>> master.config_etree
+   >>> master.enabled
+   >>> master.exists
+   >>> master.builds
+   >>> master.last_build
+   >>> master.last_stable_build
+   >>> master.last_successful_build
+   >>> master.buildnumbers
 
-.. code-block:: bash
+   >>> master.delete()
+   >>> master.enable()
+   >>> master.disable()
+   >>> master.reconfigure(newconfig)
 
-    $ pip install jenkins-webapi  # stable version
-    $ pip install git+git://github.com/gvalkov/jenkins-webapi.git  # development version
+   >>> new_master = Job.copy('master')
+   >>> new_master.config = new_configxml
+   >>> new_master.config_etree = new_configetree
+
+
+Please refer to the auto-generated :doc:`API documenation <apidoc>`
+for more information.
 
 
 Similar projects
@@ -110,6 +141,7 @@ Similar projects
 * python-jenkins_
 * autojenkins_
 * jenkinsapi_
+* pyjenkins_
 
 
 License
@@ -118,19 +150,16 @@ License
 Jenkins-webapi is released under the terms of the `Revised BSD License`_.
 
 
-Indices and tables
-==================
+.. _API:        https://wiki.jenkins-ci.org/display/JENKINS/Remote+access+API
+.. _Jenkins:    http://jenkins-ci.org/
+.. _pypi:       https://pypi.python.org/pypi/jenkins-webapi
+.. _github:     https://github.com/gvalkov/jenkins-webapi
+.. _jenkins.py: https://raw.githubusercontent.com/gvalkov/jenkins-webapi/master/jenkins.py
+.. _requests:   http://docs.python-requests.org/en/latest/
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-
-.. _API: https://wiki.jenkins-ci.org/display/JENKINS/Remote+access+API
-.. _pypi: https://pypi.python.org/pypi/jenkins-webapi
-.. _github: https://github.com/gvalkov/jenkins-webapi
-
-.. _jenkinsapi: https://pypi.python.org/pypi/jenkinsapi
+.. _jenkinsapi:     https://pypi.python.org/pypi/jenkinsapi
 .. _python-jenkins: https://pypi.python.org/pypi/python-jenkins/
-.. _autojenkins: https://pypi.python.org/pypi/autojenkins/
+.. _autojenkins:    https://pypi.python.org/pypi/autojenkins/
+.. _pyjenkins:      https://pypi.python.org/pypi/pyjenkins/
+
 .. _`Revised BSD License`: https://raw.github.com/gvalkov/jenkins-webapi/master/LICENSE
