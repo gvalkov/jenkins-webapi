@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import os, re
+import alabaster
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 templates_path = ['_templates']
 source_suffix = '.rst'
-#source_encoding = 'utf-8-sig'
-
+extensions = ['alabaster', 'sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 master_doc = 'index'
 
 project = u'jenkins-webapi'
 copyright = u'2013-2014, Georgi Valkov'
-
 
 # read version from setup.py
 for line in open('../setup.py'):
@@ -23,7 +21,6 @@ for line in open('../setup.py'):
         break
 
 version = release
-
 exclude_patterns = ['_build']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
@@ -45,8 +42,13 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
-html_theme = 'haiku'
+html_theme_path = [alabaster.get_path()]
+html_theme = 'alabaster'
+html_sidebars = {
+   '**': []
+}
 
+html_show_sourcelink = False
 #html_theme_options = {}
 #html_theme_path = []
 html_title = 'Jenkins-webapi'

@@ -3,3 +3,4 @@ termcolor >= 1.1.0
 pytest-cov >= 1.8.0
 httmock >= 1.2.2
 Sphinx >= 1.2.3
+alabaster >= 0.6.1
