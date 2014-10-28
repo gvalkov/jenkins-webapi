@@ -97,13 +97,10 @@ def test_view_add_remove_job(api, ref, tmpjob, tmpview):
     api.view_remove_job(view, job)
     assert '<string>job-abc</string>' not in api.view_config(view)
 
-# def test_view_create(api, ref):
-#     api.view_create(view_config_enc)
-#     assert ref.view_exists('Test')
-
-# def test_view_remove(api, ref, tmpview):
-#     view = tmpview('Test')
-#     tmpview.finalize = lambda *x: x
-#     assert api.view_exists('Test')
-#     api.view_delete('Test')
-#     assert not api.view_exists('Test')
+def test_view_create_remove(api, ref):
+    try:
+        api.view_create('Test', view_config_enc)
+        assert ref.view_exists('Test')
+    finally:
+        api.view_delete('Test')
+        assert not ref.view_exists('Test')
