@@ -81,6 +81,7 @@ library.
    >>> j.view_reconfigure_etree('view-name', config_etree)
 
    >>> j.view_add_job('view-name', 'job-name')
+   >>> j.view_has_job('view-name', 'job-name')
    >>> j.view_remove_job('view-name', 'job-name')
 
 
@@ -129,6 +130,12 @@ library.
    >>> new_master = Job.copy('master')
    >>> new_master.config = new_configxml
    >>> new_master.config_etree = new_configetree
+
+**View objects:**
+
+  >>> view = j.view('viewname')
+  >>> 'job-name' in view
+  >>> view.add_job(j.job('view'))
 
 
 Please refer to the auto-generated :doc:`API documenation <apidoc>`
