@@ -316,6 +316,16 @@ class View(object):
             msg = 'could not add job "%s" to view "%s"'
             raise JenkinsError(msg % (job.name, self.name))
 
+    def has_job(self, job):
+        '''Check if view contains job.'''
+        config = self.config_etree
+        jobs = config.xpath('jobNames/string/text()')
+        job = getattr(job, 'name', job)
+        return job in jobs
+
+    def __contains__(self, job):
+        return self.has_job(job)
+
     @classmethod
     def create(cls, name, configxml, server):
         '''Create a new Jenkins view.'''
@@ -541,6 +551,10 @@ class Jenkins(object):
         job = self.job(job_name)
         return self.view(name).add_job(job)
 
+    def view_has_job(self, name, job_name):
+        job = self.job(job_name)
+        return self.view(name).has_job(job)
+
     def view_remove_job(self, name, job_name):
         job = self.job(job_name)
         return self.view(name).remove_job(job)
@@ -565,6 +579,7 @@ class Jenkins(object):
     view_remove_job.__doc__ = View.remove_job.__doc__
     view_create.__doc__ = View.create.__doc__
     view_delete.__doc__ = View.delete.__doc__
+    view_has_job.__doc__ = View.has_job.__doc__
 
 
 #-----------------------------------------------------------------------------
