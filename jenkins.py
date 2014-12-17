@@ -10,7 +10,7 @@ from requests.auth import HTTPBasicAuth
 
 
 #-----------------------------------------------------------------------------
-__all__ = 'Job', 'Jenkins', 'Server', 'JenkinsError', 'Build', 'View'
+__all__ = 'Job', 'Jenkins', 'Server', 'JenkinsError', 'Build', 'View', 'Node'
 
 
 #-----------------------------------------------------------------------------
@@ -345,6 +345,108 @@ class View(object):
 
 
 #-----------------------------------------------------------------------------
+class Node(object):
+    '''Represents a Jenkins node.'''
+
+    __slots__ = 'name', 'server'
+
+    LAUNCHER_COMMAND = 'hudson.slaves.CommandLauncher'
+    LAUNCHER_JNLP = 'hudson.slaves.JNLPLauncher'
+    LAUNCHER_SSH = 'hudson.plugins.sshslaves.SSHLauncher'
+    LAUNCHER_WINDOWS_SERVICE = 'hudson.os.windows.ManagedWindowsServiceLauncher'
+
+    def __init__(self, name, server):
+        self.name = name
+        self.server = server
+
+    @property
+    def info(self):
+        url = 'computer/%s/api/json?depth=0' % quote(self.name)
+        err = 'node "%s" does not exist' % self.name
+        return self.server.json(url, errmsg=err)
+
+    @property
+    def exists(self):
+        '''Check if node exists.'''
+        try:
+            self.info
+            return True
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                return False
+            raise
+        except JenkinsError:
+            return False
+
+    def _not_exist_raise(self):
+        if not self.exists:
+            raise JenkinsError('node "%s" does not exist' % self.name)
+
+    @classmethod
+    def create(cls, name, server, num_executors=2, node_description=None,
+                    remote_FS='/var/lib/jenkins', labels=None, exclusive=False,
+                    launcher=LAUNCHER_COMMAND, launcher_params={}):
+        '''
+        :param name: name of node to create, ``str``
+        :param num_executors: number of executors for node, ``int``
+        :param node_description: Description of node, ``str``
+        :param remote_FS: Remote filesystem location to use, ``str``
+        :param labels: Labels to associate with node, ``str``
+        :param exclusive: Use this node for tied jobs only, ``bool``
+        :param launcher: The launch method for the slave
+        :param launcher_params: Additional parameters for the launcher, ``dict``
+        '''
+        node = cls(name, server)
+        if node.exists:
+            raise JenkinsError('node "%s" already exists' % name)
+
+        mode = 'EXCLUSIVE' if exclusive else 'NORMAL'
+        launcher_params['stapler-class'] = launcher
+
+        inner_params = {
+            'name': name,
+            'nodeDescription': node_description,
+            'numExecutors': num_executors,
+            'remoteFS': remote_FS,
+            'labelString': labels,
+            'mode': mode,
+            'type': 'hudson.slaves.DumbSlave$DescriptorImpl',
+            'retentionStrategy': {
+                'stapler-class':
+                'hudson.slaves.RetentionStrategy$Always'
+            },
+            'nodeProperties': {'stapler-class-bag': 'true'},
+            'launcher': launcher_params
+        }
+
+        import json
+        params = {
+            'name': name,
+            'type': 'hudson.slaves.DumbSlave$DescriptorImpl',
+            'json': json.dumps(inner_params)
+        }
+
+        res = server.post('computer/doCreateItem', params=params, throw=False)
+
+        if not res or res.status_code != 200:
+            print res.text
+            raise JenkinsError('create "%s" failed' % name)
+        else:
+            res.raise_for_status()
+
+
+    def delete(self):
+        '''Permanently remove node.'''
+        self._not_exist_raise()
+        url = 'computer/%s/doDelete' % quote(self.name)
+
+        res = self.server.post(url, throw=False)
+        if self.exists:
+            raise JenkinsError('delete of node "%s" failed' % self.name)
+        return res
+
+
+#-----------------------------------------------------------------------------
 class Build(object):
     '''Represents a Jenkins build.'''
 
@@ -444,7 +546,7 @@ class Jenkins(object):
         return [i['name'] for i in self.info['jobs']]
 
     #-------------------------------------------------------------------------
-    # alternative job, view and build api
+    # alternative object api
     def job(self, name):
         return Job(name, self.server)
 
@@ -454,6 +556,9 @@ class Jenkins(object):
     def build(self, name, number):
         name = name.name if isinstance(name, Job) else name
         return Build(name, number)
+
+    def node(self, name):
+        return Node(name, self.server)
 
     #-------------------------------------------------------------------------
     def job_info(self, name):
@@ -562,6 +667,17 @@ class Jenkins(object):
     def view_create(self, name, config):
         return View.create(name, config, self.server)
 
+    #-------------------------------------------------------------------------
+    def node_exists(self, name):
+        return Node(name, self.server).exists
+
+    def node_create(self, name, *args, **kw):
+        return Node.create(name, self.server, *args, **kw)
+
+    def node_delete(self, name):
+        return Node(name, self.server).delete()
+
+
     job_exists.__doc__ = Job.exists.__doc__
     job_delete.__doc__ = Job.delete.__doc__
     job_enable.__doc__ = Job.enable.__doc__
@@ -580,6 +696,10 @@ class Jenkins(object):
     view_create.__doc__ = View.create.__doc__
     view_delete.__doc__ = View.delete.__doc__
     view_has_job.__doc__ = View.has_job.__doc__
+
+    node_exists.__doc__ = Node.exists.__doc__
+    node_create.__doc__ = Node.create.__doc__
+    node_delete.__doc__ = Node.delete.__doc__
 
 
 #-----------------------------------------------------------------------------
