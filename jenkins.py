@@ -10,11 +10,53 @@ from requests.auth import HTTPBasicAuth
 
 
 #-----------------------------------------------------------------------------
-__all__ = 'Job', 'Jenkins', 'Server', 'JenkinsError', 'Build', 'View', 'Node'
+__all__ = (
+    'Job',
+    'Jenkins',
+    'Server',
+    'JenkinsError',
+    'Build',
+    'View',
+    'Node'
+)
+
+#-----------------------------------------------------------------------------
+class _JenkinsObject(object):
+    '''Base class for Jenkins objects.'''
+
+    @property
+    def base_url(self):
+        raise NotImplementedError()
+
+    def _url(self, path):
+        return '%s/%s' % (self.base_url, path)
+
+    @property
+    def info(self):
+        url = self._url('api/json?depth=0')
+        err = '%s does not exist' % str(self)
+        return self.server.json(url, errmsg=err)
+
+    @property
+    def exists(self):
+        '''Check if object exists.'''
+        try:
+            self.info
+            return True
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                return False
+            raise
+        except JenkinsError:
+            return False
+
+    def _not_exist_raise(self):
+        if not self.exists:
+            raise JenkinsError('%s does not exist' % str(self))
 
 
 #-----------------------------------------------------------------------------
-class Job(object):
+class Job(_JenkinsObject):
     '''Represents a Jenkins job.'''
 
     __slots__ = 'name', 'server'
@@ -30,15 +72,14 @@ class Job(object):
         cls = self.__class__.__name__
         return '%s(%r)' % (cls, self.name)
 
-    def _not_exist_raise(self):
-        if not self.exists:
-            raise JenkinsError('job "%s" does not exist' % self.name)
+    @property
+    def base_url(self):
+        return 'job/%s' % quote(self.name)
 
     def delete(self):
         '''Permanently remove job.'''
         self._not_exist_raise()
-        url = 'job/%s/doDelete' % quote(self.name)
-
+        url = self._url('doDelete')
         res = self.server.post(url, throw=False)
         if self.exists:
             raise JenkinsError('delete of job "%s" failed' % self.name)
@@ -47,13 +88,13 @@ class Job(object):
     def enable(self):
         '''Enable job.'''
         self._not_exist_raise()
-        url = 'job/%s/enable' % quote(self.name)
+        url = self._url('enable')
         return self.server.post(url)
 
     def disable(self):
         '''Disable job.'''
         self._not_exist_raise()
-        url = 'job/%s/disable' % quote(self.name)
+        url = self._url('disable')
         return self.server.post(url)
 
     def build(self, parameters=None, token=None):
@@ -66,9 +107,9 @@ class Job(object):
 
         if parameters:
             params.update(parameters)
-            url = 'job/%s/buildWithParameters' % self.name
+            url = self._url('buildWithParameters')
         else:
-            url = 'job/%s/build' % self.name
+            url = self._url('build')
 
         return self.server.post(url, params=params)
 
@@ -76,37 +117,18 @@ class Job(object):
         '''Update the config.xml of an existing job.'''
         self._not_exist_raise()
 
-        url = 'job/%s/config.xml' % self.name
+        url = self._url('config.xml')
         headers = {'Content-Type': 'text/xml'}
         params = {'name': self.name}
         return self.server.post(url, data=newconfig, params=params, headers=headers)
 
     @property
     def enabled(self):
-        return '<disabled>false</disabled>' in self.config
-
-    @property
-    def exists(self):
-        '''Check if job exists.'''
-        try:
-            self.info
-            return True
-        except HTTPError as e:
-            if e.response.status_code == 404:
-                return False
-            raise
-        except JenkinsError:
-            return False
-
-    @property
-    def info(self):
-        url = 'job/%s/api/json?depth=0' % quote(self.name)
-        err = 'job "%s" does not exist' % self.name
-        return self.server.json(url, errmsg=err)
+        return not '<disabled>true</disabled>' in self.config
 
     @property
     def config(self):
-        url = 'job/%s/config.xml' % quote(self.name)
+        url = self._url('config.xml')
         res = self.server.get(url)
         if res.status_code != 200 or res.headers.get('content-type', '') != 'application/xml':
             msg = 'fetching configuration for job "%s" did not return an xml document'
@@ -134,7 +156,7 @@ class Job(object):
         return [Build(self, i['number']) for i in self.info['builds']]
 
     def __last_build_helper(self, path):
-        url = 'job/%s/%s/api/json' % (quote(self.name), path)
+        url = self._url(path + '/api/json')
         res = self.server.json(url)
         return Build(self, res['number'])
 
@@ -199,7 +221,7 @@ class Job(object):
 
 
 #-----------------------------------------------------------------------------
-class View(object):
+class View(_JenkinsObject):
     '''Represents a Jenkins view.'''
 
     __slots__ = 'name', 'server'
@@ -215,32 +237,13 @@ class View(object):
         cls = self.__class__.__name__
         return '%s(%r)' % (cls, self.name)
 
-    def _not_exist_raise(self):
-        if not self.exists:
-            raise JenkinsError('view "%s" does not exist' % self.name)
-
     @property
-    def exists(self):
-        '''Check if view exists.'''
-        try:
-            self.info
-            return True
-        except HTTPError as e:
-            if e.response.status_code == 404:
-                return False
-            raise
-        except JenkinsError:
-            return False
-
-    @property
-    def info(self):
-        url = 'view/%s/api/json?depth=0' % quote(self.name)
-        err = 'view "%s" does not exist' % self.name
-        return self.server.json(url, errmsg=err)
+    def base_url(self):
+        return 'view/%s' % quote(self.name)
 
     @property
     def config(self):
-        url = 'view/%s/config.xml' % quote(self.name)
+        url = self._url('config.xml')
         res = self.server.get(url)
         if res.status_code != 200 or res.headers.get('content-type', '') != 'application/xml':
             msg = 'fetching configuration for view "%s" did not return an xml document'
@@ -266,8 +269,7 @@ class View(object):
     def delete(self):
         '''Permanently remove view.'''
         self._not_exist_raise()
-        url = 'view/%s/doDelete' % quote(self.name)
-
+        url = self._url('doDelete')
         res = self.server.post(url, throw=False)
         if self.exists:
             raise JenkinsError('delete of view "%s" failed' % self.name)
@@ -277,7 +279,7 @@ class View(object):
         '''Update the config.xml of an existing view.'''
         self._not_exist_raise()
 
-        url = 'view/%s/config.xml' % self.name
+        url = self._url('config.xml')
         headers = {'Content-Type': 'text/xml'}
         params = {'name': self.name}
         return self.server.post(url, data=newconfig, params=params, headers=headers)
@@ -291,7 +293,7 @@ class View(object):
         if not job.exists:
             raise JenkinsError('job "%s" does not exist' % job.name)
 
-        url = 'view/%s/removeJobFromView' % self.name
+        url = self._url('removeJobFromView')
         params = {'name': job.name}
         res = self.server.post(url, params=params)
 
@@ -308,7 +310,7 @@ class View(object):
         if not job.exists:
             raise JenkinsError('job "%s" does not exist' % job.name)
 
-        url = 'view/%s/addJobToView' % self.name
+        url = self._url('addJobToView')
         params = {'name': job.name}
         res = self.server.post(url, params=params)
 
@@ -345,7 +347,7 @@ class View(object):
 
 
 #-----------------------------------------------------------------------------
-class Node(object):
+class Node(_JenkinsObject):
     '''Represents a Jenkins node.'''
 
     __slots__ = 'name', 'server'
@@ -360,27 +362,8 @@ class Node(object):
         self.server = server
 
     @property
-    def info(self):
-        url = 'computer/%s/api/json?depth=0' % quote(self.name)
-        err = 'node "%s" does not exist' % self.name
-        return self.server.json(url, errmsg=err)
-
-    @property
-    def exists(self):
-        '''Check if node exists.'''
-        try:
-            self.info
-            return True
-        except HTTPError as e:
-            if e.response.status_code == 404:
-                return False
-            raise
-        except JenkinsError:
-            return False
-
-    def _not_exist_raise(self):
-        if not self.exists:
-            raise JenkinsError('node "%s" does not exist' % self.name)
+    def base_url(self):
+        return 'computer/%s' % quote(self.name)
 
     @classmethod
     def create(cls, name, server, num_executors=2, node_description=None,
@@ -434,12 +417,10 @@ class Node(object):
         else:
             res.raise_for_status()
 
-
     def delete(self):
         '''Permanently remove node.'''
         self._not_exist_raise()
-        url = 'computer/%s/doDelete' % quote(self.name)
-
+        url = self._url('doDelete')
         res = self.server.post(url, throw=False)
         if self.exists:
             raise JenkinsError('delete of node "%s" failed' % self.name)
@@ -447,20 +428,19 @@ class Node(object):
 
 
 #-----------------------------------------------------------------------------
-class Build(object):
+class Build(_JenkinsObject):
     '''Represents a Jenkins build.'''
 
-    __slots__ = 'job', 'number'
+    __slots__ = 'job', 'number', 'server'
 
     def __init__(self, job, number):
         self.job = job
         self.number = number
+        self.server = self.job.server
 
     @property
-    def info(self):
-        '''Get information about this build.'''
-        url = 'job/%s/%d/api/json' % (self.job.name, self.number)
-        return self.job.server.json(url, 'unable to retrieve info')
+    def base_url(self):
+        return '%s/%d' % (self.job.base_url, self.number)
 
     @property
     def building(self):
@@ -471,8 +451,8 @@ class Build(object):
         return '%s(%r, %r)' % (cls, self.job, self.number)
 
     def stop(self):
-        url = 'job/%s/%d/stop' % (self.job.name, self.number)
-        return self.job.server.post(url)
+        url = self._url('stop')
+        return self.server.post(url)
 
     def wait(self, tick=1, timeout=None):
         '''Wait for build to complete.'''
