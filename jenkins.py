@@ -539,11 +539,19 @@ class Jenkins(object):
 
     @property
     def jobs(self):
-        return [Job(i['name'], self.server) for i in self.info['jobs']]
+        return list(self.xjobs)
+
+    @property
+    def xjobs(self):
+        return (Job(i['name'], self.server) for i in self.info['jobs'])
 
     @property
     def jobnames(self):
-        return [i['name'] for i in self.info['jobs']]
+        return list(self.xjobnames)
+
+    @property
+    def xjobnames(self):
+        return (i['name'] for i in self.info['jobs'])
 
     #-------------------------------------------------------------------------
     # alternative object api
