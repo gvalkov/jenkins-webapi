@@ -5,7 +5,7 @@ import time
 import requests
 
 from requests import HTTPError
-from requests.compat import quote
+from requests.compat import quote, json
 from requests.auth import HTTPBasicAuth
 
 
@@ -21,19 +21,19 @@ __all__ = (
 )
 
 #-----------------------------------------------------------------------------
-class _JenkinsObject(object):
+class _JenkinsBase(object):
     '''Base class for Jenkins objects.'''
 
     @property
-    def base_url(self):
+    def baseurl(self):
         raise NotImplementedError()
 
-    def _url(self, path):
-        return '%s/%s' % (self.base_url, path)
+    def url(self, path):
+        return '%s/%s' % (self.baseurl, path)
 
     @property
     def info(self):
-        url = self._url('api/json?depth=0')
+        url = self.url('api/json?depth=0')
         err = '%s does not exist' % str(self)
         return self.server.json(url, errmsg=err)
 
@@ -56,7 +56,7 @@ class _JenkinsObject(object):
 
 
 #-----------------------------------------------------------------------------
-class Job(_JenkinsObject):
+class Job(_JenkinsBase):
     '''Represents a Jenkins job.'''
 
     __slots__ = 'name', 'server'
@@ -73,13 +73,13 @@ class Job(_JenkinsObject):
         return '%s(%r)' % (cls, self.name)
 
     @property
-    def base_url(self):
+    def baseurl(self):
         return 'job/%s' % quote(self.name)
 
     def delete(self):
         '''Permanently remove job.'''
         self._not_exist_raise()
-        url = self._url('doDelete')
+        url = self.url('doDelete')
         res = self.server.post(url, throw=False)
         if self.exists:
             raise JenkinsError('delete of job "%s" failed' % self.name)
@@ -88,13 +88,13 @@ class Job(_JenkinsObject):
     def enable(self):
         '''Enable job.'''
         self._not_exist_raise()
-        url = self._url('enable')
+        url = self.url('enable')
         return self.server.post(url)
 
     def disable(self):
         '''Disable job.'''
         self._not_exist_raise()
-        url = self._url('disable')
+        url = self.url('disable')
         return self.server.post(url)
 
     def build(self, parameters=None, token=None):
@@ -107,9 +107,9 @@ class Job(_JenkinsObject):
 
         if parameters:
             params.update(parameters)
-            url = self._url('buildWithParameters')
+            url = self.url('buildWithParameters')
         else:
-            url = self._url('build')
+            url = self.url('build')
 
         return self.server.post(url, params=params)
 
@@ -117,7 +117,7 @@ class Job(_JenkinsObject):
         '''Update the config.xml of an existing job.'''
         self._not_exist_raise()
 
-        url = self._url('config.xml')
+        url = self.url('config.xml')
         headers = {'Content-Type': 'text/xml'}
         params = {'name': self.name}
         return self.server.post(url, data=newconfig, params=params, headers=headers)
@@ -128,7 +128,7 @@ class Job(_JenkinsObject):
 
     @property
     def config(self):
-        url = self._url('config.xml')
+        url = self.url('config.xml')
         res = self.server.get(url)
         if res.status_code != 200 or res.headers.get('content-type', '') != 'application/xml':
             msg = 'fetching configuration for job "%s" did not return an xml document'
@@ -156,7 +156,7 @@ class Job(_JenkinsObject):
         return [Build(self, i['number']) for i in self.info['builds']]
 
     def __last_build_helper(self, path):
-        url = self._url(path + '/api/json')
+        url = self.url(path + '/api/json')
         res = self.server.json(url)
         return Build(self, res['number'])
 
@@ -221,7 +221,7 @@ class Job(_JenkinsObject):
 
 
 #-----------------------------------------------------------------------------
-class View(_JenkinsObject):
+class View(_JenkinsBase):
     '''Represents a Jenkins view.'''
 
     __slots__ = 'name', 'server'
@@ -238,12 +238,12 @@ class View(_JenkinsObject):
         return '%s(%r)' % (cls, self.name)
 
     @property
-    def base_url(self):
+    def baseurl(self):
         return 'view/%s' % quote(self.name)
 
     @property
     def config(self):
-        url = self._url('config.xml')
+        url = self.url('config.xml')
         res = self.server.get(url)
         if res.status_code != 200 or res.headers.get('content-type', '') != 'application/xml':
             msg = 'fetching configuration for view "%s" did not return an xml document'
@@ -269,7 +269,7 @@ class View(_JenkinsObject):
     def delete(self):
         '''Permanently remove view.'''
         self._not_exist_raise()
-        url = self._url('doDelete')
+        url = self.url('doDelete')
         res = self.server.post(url, throw=False)
         if self.exists:
             raise JenkinsError('delete of view "%s" failed' % self.name)
@@ -279,7 +279,7 @@ class View(_JenkinsObject):
         '''Update the config.xml of an existing view.'''
         self._not_exist_raise()
 
-        url = self._url('config.xml')
+        url = self.url('config.xml')
         headers = {'Content-Type': 'text/xml'}
         params = {'name': self.name}
         return self.server.post(url, data=newconfig, params=params, headers=headers)
@@ -293,7 +293,7 @@ class View(_JenkinsObject):
         if not job.exists:
             raise JenkinsError('job "%s" does not exist' % job.name)
 
-        url = self._url('removeJobFromView')
+        url = self.url('removeJobFromView')
         params = {'name': job.name}
         res = self.server.post(url, params=params)
 
@@ -310,7 +310,7 @@ class View(_JenkinsObject):
         if not job.exists:
             raise JenkinsError('job "%s" does not exist' % job.name)
 
-        url = self._url('addJobToView')
+        url = self.url('addJobToView')
         params = {'name': job.name}
         res = self.server.post(url, params=params)
 
@@ -347,7 +347,7 @@ class View(_JenkinsObject):
 
 
 #-----------------------------------------------------------------------------
-class Node(_JenkinsObject):
+class Node(_JenkinsBase):
     '''Represents a Jenkins node.'''
 
     __slots__ = 'name', 'server'
@@ -362,13 +362,13 @@ class Node(_JenkinsObject):
         self.server = server
 
     @property
-    def base_url(self):
+    def baseurl(self):
         return 'computer/%s' % quote(self.name)
 
     @classmethod
     def create(cls, name, server, num_executors=2, node_description=None,
-                    remote_FS='/var/lib/jenkins', labels=None, exclusive=False,
-                    launcher=LAUNCHER_COMMAND, launcher_params={}):
+                remote_FS='/var/lib/jenkins', labels=None, exclusive=False,
+                launcher=LAUNCHER_COMMAND, launcher_params={}):
         '''
         :param name: name of node to create, ``str``
         :param num_executors: number of executors for node, ``int``
@@ -402,7 +402,6 @@ class Node(_JenkinsObject):
             'launcher': launcher_params
         }
 
-        import json
         params = {
             'name': name,
             'type': 'hudson.slaves.DumbSlave$DescriptorImpl',
@@ -412,7 +411,7 @@ class Node(_JenkinsObject):
         res = server.post('computer/doCreateItem', params=params, throw=False)
 
         if not res or res.status_code != 200:
-            print res.text
+            print(res.text)
             raise JenkinsError('create "%s" failed' % name)
         else:
             res.raise_for_status()
@@ -420,7 +419,7 @@ class Node(_JenkinsObject):
     def delete(self):
         '''Permanently remove node.'''
         self._not_exist_raise()
-        url = self._url('doDelete')
+        url = self.url('doDelete')
         res = self.server.post(url, throw=False)
         if self.exists:
             raise JenkinsError('delete of node "%s" failed' % self.name)
@@ -428,7 +427,7 @@ class Node(_JenkinsObject):
 
 
 #-----------------------------------------------------------------------------
-class Build(_JenkinsObject):
+class Build(_JenkinsBase):
     '''Represents a Jenkins build.'''
 
     __slots__ = 'job', 'number', 'server'
@@ -439,8 +438,8 @@ class Build(_JenkinsObject):
         self.server = self.job.server
 
     @property
-    def base_url(self):
-        return '%s/%d' % (self.job.base_url, self.number)
+    def baseurl(self):
+        return '%s/%d' % (self.job.baseurl, self.number)
 
     @property
     def building(self):
@@ -451,7 +450,7 @@ class Build(_JenkinsObject):
         return '%s(%r, %r)' % (cls, self.job, self.number)
 
     def stop(self):
-        url = self._url('stop')
+        url = self.url('stop')
         return self.server.post(url)
 
     def wait(self, tick=1, timeout=None):
@@ -534,7 +533,7 @@ class Jenkins(object):
         return (i['name'] for i in self.info['jobs'])
 
     #-------------------------------------------------------------------------
-    # alternative object api
+    # alternative jenkins object api
     def job(self, name):
         return Job(name, self.server)
 
