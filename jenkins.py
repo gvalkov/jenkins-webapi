@@ -347,37 +347,45 @@ class View(_JenkinsBase):
 
 
 #-----------------------------------------------------------------------------
+class NodeLaunchMethod:
+    COMMAND = 'hudson.slaves.CommandLauncher'
+    JNLP    = 'hudson.slaves.JNLPLauncher'
+    SSH     = 'hudson.plugins.sshslaves.SSHLauncher'
+    WINDOWS_SERVICE = 'hudson.os.windows.ManagedWindowsServiceLauncher'
+
 class Node(_JenkinsBase):
     '''Represents a Jenkins node.'''
 
     __slots__ = 'name', 'server'
 
-    LAUNCHER_COMMAND = 'hudson.slaves.CommandLauncher'
-    LAUNCHER_JNLP = 'hudson.slaves.JNLPLauncher'
-    LAUNCHER_SSH = 'hudson.plugins.sshslaves.SSHLauncher'
-    LAUNCHER_WINDOWS_SERVICE = 'hudson.os.windows.ManagedWindowsServiceLauncher'
-
     def __init__(self, name, server):
         self.name = name
         self.server = server
+
+    def __str__(self):
+        return '<node:%s>' % (self.name)
 
     @property
     def baseurl(self):
         return 'computer/%s' % quote(self.name)
 
     @classmethod
-    def create(cls, name, server, num_executors=2, node_description=None,
-                remote_FS='/var/lib/jenkins', labels=None, exclusive=False,
-                launcher=LAUNCHER_COMMAND, launcher_params={}):
+    def create(cls, name, remotefs, server,
+               num_executors=2,
+               node_description=None,
+               labels=None,
+               exclusive=False,
+               launcher=NodeLaunchMethod.COMMAND,
+               launcher_params={}):
         '''
         :param name: name of node to create, ``str``
+        :param remotefs: Remote root directory, ``str``
         :param num_executors: number of executors for node, ``int``
         :param node_description: Description of node, ``str``
-        :param remote_FS: Remote filesystem location to use, ``str``
         :param labels: Labels to associate with node, ``str``
         :param exclusive: Use this node for tied jobs only, ``bool``
-        :param launcher: The launch method for the slave
-        :param launcher_params: Additional parameters for the launcher, ``dict``
+        :param launcher: Slave launch method, ``NodeLaunchMethod|str``
+        :param launcher_params: Additional launcher parameters, ``dict``
         '''
         node = cls(name, server)
         if node.exists:
@@ -390,7 +398,7 @@ class Node(_JenkinsBase):
             'name': name,
             'nodeDescription': node_description,
             'numExecutors': num_executors,
-            'remoteFS': remote_FS,
+            'remoteFS': remotefs,
             'labelString': labels,
             'mode': mode,
             'type': 'hudson.slaves.DumbSlave$DescriptorImpl',
@@ -658,8 +666,8 @@ class Jenkins(object):
     def node_exists(self, name):
         return Node(name, self.server).exists
 
-    def node_create(self, name, *args, **kw):
-        return Node.create(name, self.server, *args, **kw)
+    def node_create(self, name, remotefs, *args, **kw):
+        return Node.create(name, remotefs, self.server, *args, **kw)
 
     def node_delete(self, name):
         return Node(name, self.server).delete()
