@@ -87,33 +87,31 @@ def jobname(request):
     return request.param
 
 # Job names to test with and ensure that they don't exist upon completion.
-@pytest.fixture(scope='function')
+@pytest.yield_fixture(scope='function')
 def jobname_gc(jobname, ref, request):
-    finalizer = partial(ref.delete_job, jobname)
-    request.addfinalizer(finalizer)
-    return jobname
+    yield jobname
+    ref.delete_job(jobname)
 
 # A temporary job using the jobname fixture and the reference api.
-@pytest.fixture(scope='function')
+@pytest.yield_fixture(scope='function')
 def tmpjob_named(jobname, ref, request):
     ref.create_job(jobname, job_config_enc)
-    finalizer = partial(ref.delete_job, jobname)
-    request.addfinalizer(finalizer)
-    return jobname
+    yield jobname
+    ref.delete_job(jobname)
 
 #-----------------------------------------------------------------------------
 # A temporary job to which we give a name. Uses the reference api.
-@pytest.fixture(scope='function')
+@pytest.yield_fixture(scope='function')
 def tmpjob(ref, request):
-    tmp = TempJob(ref)
-    request.addfinalizer(tmp.finalize)
-    return tmp
+    job = TempJob(ref)
+    yield job
+    job.finalize()
 
-@pytest.fixture(scope='function')
+@pytest.yield_fixture(scope='function')
 def tmpview(ref, request):
-    tmp = TempView(ref)
-    request.addfinalizer(tmp.finalize)
-    return tmp
+    view = TempView(ref)
+    yield view
+    view.finalize()
 
 class TempJob:
     def __init__(self, ref):
@@ -128,17 +126,33 @@ class TempJob:
         self.ref.delete_job(self.name)
         time.sleep(0.1)
 
-class TempView:
+class TempJenkinsObject:
+    def create(config):
+        raise NotImplementedError
+
+    def delete(config):
+        raise NotImplementedError
+
     def __init__(self, ref):
         self.ref = ref
 
-    def __call__(self, name, config=view_config):
+    def __call__(self, name, config=None):
+        config = config if config else self.default_config
         config = re.sub('<name>.*</name>', '<name>%s</name>' % name, config)
         config = config.encode('utf8')
         self.name = name
-        self.ref.create_view(config)
+        self.create(config)
         return name
 
     def finalize(self):
-        self.ref.delete_view(self.name)
+        self.delete(self.name)
         time.sleep(0.1)
+
+class TempView(TempJenkinsObject):
+    default_config = view_config
+
+    def create(self, config):
+        self.ref.create_view(config)
+
+    def delete(self, name):
+        self.ref.delete_view(name)
