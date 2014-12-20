@@ -18,7 +18,7 @@ def test_job_exists(api, ref, tmpjob):
     assert api.job_exists(job)
 
 def test_job_exists_fail(api, ref):
-    assert api.job_exists('does not exist') == False
+    assert api.job_exists('does not exist') is False
 
 def test_job_exists_auth_fail(api, ref, tmpjob):
     @all_requests
@@ -41,15 +41,15 @@ def test_job_create_fail(api, ref, jobname):
     with pytest.raises(JenkinsError):
         api.job_create(jobname, 'not xml')
 
-    ref.create_job(jobname, job_config_enc)
+    ref.job_create(jobname, job_config_enc)
     with pytest.raises(JenkinsError):
         api.job_create(jobname, job_config_enc)
 
 
 #-----------------------------------------------------------------------------
 def test_job_copy(api, ref):
-    ref.create_job('job-copy-src', job_config_enc)
-    ref.create_job('job-copy-dst-1', job_config_enc)
+    ref.job_create('job-copy-src', job_config_enc)
+    ref.job_create('job-copy-dst-1', job_config_enc)
 
     assert api.job_copy('job-copy-src', 'job-copy-dst').exists
     assert api.job_config('job-copy-src').strip() == api.job_config('job-copy-dst').strip()
@@ -60,23 +60,23 @@ def test_job_copy(api, ref):
 
 #-----------------------------------------------------------------------------
 def test_job_delete(api, ref, jobname):
-    ref.create_job(jobname, job_config_enc)
+    ref.job_create(jobname, job_config_enc)
     try:
         api.job_delete(jobname)
         assert True
     except JenkinsError:
-        ref.delete_job(jobname)
+        ref.job_delete(jobname)
         assert False
 
 
-#-----------------------------------------------------------------------------
+#----------------------------------------------------------------------------
 def test_job_enable(api, ref, tmpjob_named):
-    ref.disable_job(tmpjob_named)
+    ref.job_disable(tmpjob_named)
     api.job_enable(tmpjob_named)
     assert Job(tmpjob_named, api.server).enabled
 
 def test_job_disable(api, ref, tmpjob_named):
-    ref.enable_job(tmpjob_named)
+    ref.job_enable(tmpjob_named)
     api.job_disable(tmpjob_named)
     assert not Job(tmpjob_named, api.server).enabled
 
