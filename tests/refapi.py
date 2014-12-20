@@ -23,6 +23,10 @@ class JenkinsCLI:
         self.node_delete = partial(self.item_delete, 'node')
         self.job_delete  = partial(self.item_delete, 'job')
 
+        self.view_config = partial(self.item_config, 'view')
+        self.node_config = partial(self.item_config, 'node')
+        self.job_config  = partial(self.item_config, 'job')
+
     def item_delete(self, item, name):
         green('\nRemoving %s "%s" with jenkins-cli' % (item, name))
         cmd = self.cmd + ['delete-%s' % item, name]

@@ -115,6 +115,12 @@ def tmpview(ref, request):
     yield view
     view.finalize()
 
+@pytest.yield_fixture(scope='function')
+def tmpnode(ref, request):
+    node = TempNode(ref)
+    yield node
+    node.finalize()
+
 class TempJob:
     def __init__(self, ref):
         self.ref = ref
@@ -166,4 +172,4 @@ class TempNode(TempJenkinsObject):
         self.ref.node_create(config)
 
     def delete(self, name):
-        self.ref.delete_view(name)
+        self.ref.node_delete(name)
