@@ -1,11 +1,12 @@
+# -*- coding: utf-8; -*-
+
 import re
 import time
 import pytest
 
-from os.path import abspath, dirname, join as pjoin
-from functools import partial
+from os.path import join as pjoin
 
-from jenkins import Jenkins, Job, JenkinsError
+from jenkins import Jenkins
 from . install import JenkinsInstall
 from . refapi import JenkinsCLI
 from . utils import *
@@ -46,7 +47,8 @@ def env(request):
     def start():
         print()
         ji.bootstrap()
-        ji.start() ; print ()
+        ji.start()
+        print()
         ji.wait()
 
     if request.config.getoption('--reuse-jenkins'):
@@ -74,8 +76,8 @@ def ref(env):
     r = JenkinsCLI('http://%(addr)s:%(port)s' % env.__dict__, env.jenkinscli)
 
     green('Removing all jobs ...')
-    for name in r.list_jobs():
-        r.delete_job(name)
+    for name in r.jobs():
+        r.job_delete(name)
 
     return r
 
@@ -90,14 +92,14 @@ def jobname(request):
 @pytest.yield_fixture(scope='function')
 def jobname_gc(jobname, ref, request):
     yield jobname
-    ref.delete_job(jobname)
+    ref.job_delete(jobname)
 
 # A temporary job using the jobname fixture and the reference api.
 @pytest.yield_fixture(scope='function')
 def tmpjob_named(jobname, ref, request):
-    ref.create_job(jobname, job_config_enc)
+    ref.job_create(jobname, job_config_enc)
     yield jobname
-    ref.delete_job(jobname)
+    ref.job_delete(jobname)
 
 #-----------------------------------------------------------------------------
 # A temporary job to which we give a name. Uses the reference api.
@@ -119,11 +121,11 @@ class TempJob:
 
     def __call__(self, name, config=job_config_enc):
         self.name = name
-        self.ref.create_job(name, config)
+        self.ref.job_create(name, config)
         return name
 
     def finalize(self):
-        self.ref.delete_job(self.name)
+        self.ref.job_delete(self.name)
         time.sleep(0.1)
 
 class TempJenkinsObject:
@@ -152,7 +154,16 @@ class TempView(TempJenkinsObject):
     default_config = view_config
 
     def create(self, config):
-        self.ref.create_view(config)
+        self.ref.view_create(config)
+
+    def delete(self, name):
+        self.ref.view_delete(name)
+
+class TempNode(TempJenkinsObject):
+    default_config = node_config
+
+    def create(self, config):
+        self.ref.node_create(config)
 
     def delete(self, name):
         self.ref.delete_view(name)
