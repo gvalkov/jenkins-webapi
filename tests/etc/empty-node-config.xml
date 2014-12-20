@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<slave>
+  <name>Test</name>
+  <description/>
+  <remoteFS>/tmp/jenkins-test-node</remoteFS>
+  <numExecutors>1</numExecutors>
+  <mode>NORMAL</mode>
+  <retentionStrategy class="hudson.slaves.RetentionStrategy$Always"/>
+  <launcher class="hudson.plugins.sshslaves.SSHLauncher" plugin="ssh-slaves@1.5">
+    <host/>
+    <port>22</port>
+  </launcher>
+  <label/>
+  <nodeProperties/>
+  <userId>anonymous</userId>
+</slave>

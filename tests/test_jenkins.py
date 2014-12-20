@@ -104,3 +104,19 @@ def test_view_create_remove(api, ref):
     finally:
         api.view_delete('Test')
         assert not ref.view_exists('Test')
+
+#-----------------------------------------------------------------------------
+def test_node_exists(api, ref, tmpnode):
+    view = tmpnode('Test')
+    assert api.node_exists('Test')
+    assert not api.node_exists('NoTest')
+
+def test_node_create_remove(api, ref):
+    try:
+        api.node_create('Test1', '/tmp/test')
+        assert ref.node_exists('Test1')
+        api.node_delete('Test1')
+        assert not ref.node_exists('Test1')
+    finally:
+        if ref.node_exists('Test1'):
+            ref.node_delete('Test1')

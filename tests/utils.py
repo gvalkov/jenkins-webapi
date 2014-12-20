@@ -19,6 +19,11 @@ view_config_fn = pjoin(here, 'etc/empty-view-config.xml')
 view_config = open(view_config_fn).read()
 view_config_enc = view_config.encode('utf8')
 
+# a minimal node config.xml
+node_config_fn = pjoin(here, 'etc/empty-node-config.xml')
+node_config = open(node_config_fn).read()
+node_config_enc = node_config.encode('utf8')
+
 # output functions
 green = lambda x: cprint(x, 'green')
 red   = lambda x: cprint(x, 'red')
