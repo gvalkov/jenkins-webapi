@@ -638,6 +638,9 @@ class Jenkins(object):
     def node_create(self, name, remotefs, *args, **kw):
         return Node.create(name, remotefs, self.server, *args, **kw)
 
+    def node_info(self, name):
+        return Node(name, self.server).info
+
     def node_delete(self, name):
         return Node(name, self.server).delete()
 
