@@ -81,6 +81,7 @@ library.
    >>> j.view_reconfigure_etree('view-name', config_etree)
 
    >>> j.view_add_job('view-name', 'job-name')
+   >>> j.view_has_job('view-name', 'job-name')
    >>> j.view_remove_job('view-name', 'job-name')
 
 
@@ -104,6 +105,21 @@ library.
 
    >>> j.build_wait()
    >>> j.build_wait(interval=5, timeout=60)
+
+
+**Working with nodes:**
+
+.. code-block:: python
+
+   >>> j.node_create('node-name', '/workdir')
+
+   >>> j.node_exists('node-name')
+   >>> j.node_delete('node-name')
+
+   >>> j.node_config('node-name')
+   >>> j.node_config_etree('node-name')
+
+   >>> j.node_info('node-name')
 
 
 **Job objects:**
@@ -130,6 +146,16 @@ library.
    >>> new_master.config = new_configxml
    >>> new_master.config_etree = new_configetree
 
+**View objects:**
+
+  >>> view = j.view('viewname')
+  >>> 'job-name' in view
+  >>> view.add_job(j.job('view'))
+
+**Node objects:**
+
+  >>> node = j.node('nodename')
+  >>> node.config
 
 Please refer to the auto-generated :doc:`API documenation <apidoc>`
 for more information.
