@@ -50,6 +50,40 @@ class _JenkinsBase(object):
         except JenkinsError:
             return False
 
+    @property
+    def config(self):
+        url = self.url('config.xml')
+        res = self.server.get(url)
+        if res.status_code != 200 or res.headers.get('content-type', '') != 'application/xml':
+            msg = 'fetching configuration for item "%s" did not return an xml document'
+            raise JenkinsError(msg % self.name)
+        return res.text
+
+    @config.setter
+    def config(self, newconfig):
+        self.reconfigure(newconfig)
+
+    @property
+    def config_etree(self):
+        # The cost of `'lxml' in sys.modules' is negligible and is
+        # preferable to having a hard dependency on lxml.
+        from lxml import etree
+        return etree.fromstring(self.config.encode('utf8'))
+
+    @config_etree.setter
+    def config_etree(self, newconfig):
+        newconfig = newconfig.tostring(etree)
+        self.reconfigure(newconfig)
+
+    def reconfigure(self, newconfig):
+        '''Update the config.xml of an existing item.'''
+        self._not_exist_raise()
+
+        url = self.url('config.xml')
+        headers = {'Content-Type': 'text/xml'}
+        params = {'name': self.name}
+        return self.server.post(url, data=newconfig, params=params, headers=headers)
+
     def _not_exist_raise(self):
         if not self.exists:
             raise JenkinsError('%s does not exist' % str(self))
@@ -113,43 +147,9 @@ class Job(_JenkinsBase):
 
         return self.server.post(url, params=params)
 
-    def reconfigure(self, newconfig):
-        '''Update the config.xml of an existing job.'''
-        self._not_exist_raise()
-
-        url = self.url('config.xml')
-        headers = {'Content-Type': 'text/xml'}
-        params = {'name': self.name}
-        return self.server.post(url, data=newconfig, params=params, headers=headers)
-
     @property
     def enabled(self):
         return not '<disabled>true</disabled>' in self.config
-
-    @property
-    def config(self):
-        url = self.url('config.xml')
-        res = self.server.get(url)
-        if res.status_code != 200 or res.headers.get('content-type', '') != 'application/xml':
-            msg = 'fetching configuration for job "%s" did not return an xml document'
-            raise JenkinsError(msg % self.name)
-        return res.text
-
-    @config.setter
-    def config(self, newconfig):
-        self.reconfigure(newconfig)
-
-    @property
-    def config_etree(self):
-        # The cost of `'lxml' in sys.modules' is negligible and is
-        # preferable to having a hard dependency on lxml.
-        from lxml import etree
-        return etree.fromstring(self.config.encode('utf8'))
-
-    @config_etree.setter
-    def config_etree(self, newconfig):
-        newconfig = newconfig.tostring(etree)
-        self.reconfigure(newconfig)
 
     @property
     def builds(self):
@@ -241,31 +241,6 @@ class View(_JenkinsBase):
     def baseurl(self):
         return 'view/%s' % quote(self.name)
 
-    @property
-    def config(self):
-        url = self.url('config.xml')
-        res = self.server.get(url)
-        if res.status_code != 200 or res.headers.get('content-type', '') != 'application/xml':
-            msg = 'fetching configuration for view "%s" did not return an xml document'
-            raise JenkinsError(msg % self.name)
-        return res.text
-
-    @config.setter
-    def config(self, newconfig):
-        self.reconfigure(newconfig)
-
-    @property
-    def config_etree(self):
-        # The cost of `'lxml' in sys.modules' is negligible and is
-        # preferable to having a hard dependency on lxml.
-        from lxml import etree
-        return etree.fromstring(self.config.encode('utf8'))
-
-    @config_etree.setter
-    def config_etree(self, newconfig):
-        newconfig = newconfig.tostring(etree)
-        self.reconfigure(newconfig)
-
     def delete(self):
         '''Permanently remove view.'''
         self._not_exist_raise()
@@ -274,15 +249,6 @@ class View(_JenkinsBase):
         if self.exists:
             raise JenkinsError('delete of view "%s" failed' % self.name)
         return res
-
-    def reconfigure(self, newconfig):
-        '''Update the config.xml of an existing view.'''
-        self._not_exist_raise()
-
-        url = self.url('config.xml')
-        headers = {'Content-Type': 'text/xml'}
-        params = {'name': self.name}
-        return self.server.post(url, data=newconfig, params=params, headers=headers)
 
     def remove_job(self, job):
         '''Remove job from view.'''
@@ -432,6 +398,9 @@ class Node(_JenkinsBase):
         if self.exists:
             raise JenkinsError('delete of node "%s" failed' % self.name)
         return res
+
+    def reconfigure(self, newconfig):
+        raise NotImplementedError
 
 
 #-----------------------------------------------------------------------------
@@ -672,6 +641,11 @@ class Jenkins(object):
     def node_delete(self, name):
         return Node(name, self.server).delete()
 
+    def node_config(self, name):
+        return self.node(name).config
+
+    def node_config_etree(self, name):
+        return self.node(name).config_etree
 
     job_exists.__doc__ = Job.exists.__doc__
     job_delete.__doc__ = Job.delete.__doc__
