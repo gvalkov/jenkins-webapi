@@ -20,7 +20,7 @@ classifiers = [
 
 kw = {
     'name':             'jenkins-webapi',
-    'version':          '0.3.2',
+    'version':          '0.4.0',
     'description':      'Module for interacting with the Jenkins CI server',
     'long_description': open('README.rst').read(),
     'author':           'Georgi Valkov',
@@ -30,7 +30,7 @@ kw = {
     'keywords':         'jenkins ci',
     'classifiers':      classifiers,
     'py_modules':       ['jenkins'],
-    'install_requires': ['requests>=2.4.3'],
+    'install_requires': ['requests>=2.5.0'],
     'tests_require':    open('requirements-dev.txt').readlines(),
     'zip_safe':         True,
 }
