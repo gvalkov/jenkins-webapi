@@ -4,6 +4,17 @@
 from setuptools import setup
 
 
+requires = [
+    'requests>=2.5.0',
+]
+
+tests_require = [
+    'pytest >= 2.6.3',
+    'termcolor >= 1.1.0',
+    'pytest-cov >= 1.8.0',
+    'httmock >= 1.2.2',
+]
+
 classifiers = [
     'Development Status :: 4 - Beta',
     'Programming Language :: Python :: 2.6',
@@ -30,8 +41,8 @@ kw = {
     'keywords':         'jenkins ci',
     'classifiers':      classifiers,
     'py_modules':       ['jenkins'],
-    'install_requires': ['requests>=2.5.0'],
-    'tests_require':    open('requirements-dev.txt').readlines(),
+    'install_requires': requires,
+    'tests_require':    tests_require,
     'zip_safe':         True,
 }
 
