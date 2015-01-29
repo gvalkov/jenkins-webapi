@@ -1,2 +1,11 @@
 include README.rst
 include requirements-dev.txt
+
+# Tests
+recursive-include tests *
+recursive-exclude tests/tmp *
+recursive-exclude tests/bin/jenkins-cli-persist *
+
+# Docs
+recursive-include doc *
+recursive-exclude doc/_build *
