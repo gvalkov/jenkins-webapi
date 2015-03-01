@@ -31,6 +31,10 @@ library.
    >>> from jenkins import Jenkins, JenkinsError
    >>> j = Jenkins('http://server:port', 'username', 'password')
 
+The constructor also accepts the ``verify`` and ``cert`` arguments
+which are useful when accessing Jenkins over https. Please refer to
+the `requests documentation`_ for more information.
+
 **Working with jobs:**
 
 .. code-block:: python
@@ -182,6 +186,7 @@ Jenkins-webapi is released under the terms of the `Revised BSD License`_.
 .. _github:     https://github.com/gvalkov/jenkins-webapi
 .. _jenkins.py: https://raw.githubusercontent.com/gvalkov/jenkins-webapi/master/jenkins.py
 .. _requests:   http://docs.python-requests.org/en/latest/
+.. _requests documentation: http://docs.python-requests.org/en/latest/user/advanced/#ssl-cert-verification
 
 .. _jenkinsapi:     https://pypi.python.org/pypi/jenkinsapi
 .. _python-jenkins: https://pypi.python.org/pypi/python-jenkins/
