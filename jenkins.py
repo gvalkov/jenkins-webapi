@@ -441,9 +441,18 @@ class Build(_JenkinsBase):
 
 #-----------------------------------------------------------------------------
 class Server(object):
-    def __init__(self, url, username=None, password=None):
+    def __init__(self, url, username=None, password=None, verify=True, cert=None):
         self.url = url if url.endswith('/') else url + '/'
         self.auth = HTTPBasicAuth(username, password) if username else None
+        self.verify = verify
+        self.cert = cert
+
+        # These arguments will be passed in every call to requests.get|post().
+        self.request_kw = {
+            'auth': self.auth,
+            'cert': cert,
+            'verify': verify,
+        }
 
     def __repr__(self):
         cls = self.__class__.__name__
@@ -453,19 +462,22 @@ class Server(object):
         return '%s%s' % (self.url, '/'.join(args))
 
     def post(self, url, throw=True, **kw):
-        res = requests.post(self.urljoin(url), auth=self.auth, **kw)
+        kw = mergedict(self.request_kw, kw)
+        res = requests.post(self.urljoin(url), **kw)
         throw and res.raise_for_status()
         return res
 
     def get(self, url, throw=True, **kw):
-        res = requests.get(self.urljoin(url), auth=self.auth, **kw)
+        kw = mergedict(self.request_kw, kw)
+        res = requests.get(self.urljoin(url), **kw)
         throw and res.raise_for_status()
         return res
 
     def json(self, url, errmsg=None, throw=True, **kw):
         url = self.urljoin(url)
+        kw = mergedict(self.request_kw, kw)
         try:
-            res = requests.get(url, auth=self.auth, **kw)
+            res = requests.get(url, **kw)
             throw and res.raise_for_status()
             if not res:
                 raise JenkinsError(errmsg)
@@ -476,10 +488,10 @@ class Server(object):
 
 #-----------------------------------------------------------------------------
 class Jenkins(object):
-    def __init__(self, url, username=None, password=None):
+    def __init__(self, url, username=None, password=None, verify=True, cert=None):
         '''Create handle to Jenkins instance.'''
 
-        self.server = Server(url, username, password)
+        self.server = Server(url, username, password, verify, cert)
         self.url = self.server.url
 
     def __repr__(self):
@@ -675,6 +687,13 @@ class Jenkins(object):
 
 
 #-----------------------------------------------------------------------------
+# Utility functions.
+def mergedict(a, b):
+    c = a.copy()
+    c.update(b)
+    return c
+
+#-----------------------------------------------------------------------------
 class JenkinsError(Exception):
     '''Exception type for Jenkins-API related failures.'''
 
@@ -684,7 +703,7 @@ class JenkinsError(Exception):
 
 
 #-----------------------------------------------------------------------------
-# uncomment to enable http logging
+# Uncomment to enable http logging
 # try:
 #     import logging, httplib
 #     httplib.HTTPConnection.debuglevel = 1
