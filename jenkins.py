@@ -106,6 +106,12 @@ class Job(_JenkinsBase):
         cls = self.__class__.__name__
         return '%s(%r)' % (cls, self.name)
 
+    def __hash__(self):
+        return hash(self.name) ^ hash(self.server) ^ hash(self.__class__)
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.name == other.name and self.server == other.server
+
     @property
     def baseurl(self):
         return 'job/%s' % quote(self.name)
@@ -237,6 +243,12 @@ class View(_JenkinsBase):
         cls = self.__class__.__name__
         return '%s(%r)' % (cls, self.name)
 
+    def __hash__(self):
+        return hash(self.name) ^ hash(self.server) ^ hash(self.__class__)
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.name == other.name and self.server == other.server
+
     @property
     def baseurl(self):
         return 'view/%s' % quote(self.name)
@@ -331,6 +343,12 @@ class Node(_JenkinsBase):
     def __str__(self):
         return '<node:%s>' % (self.name)
 
+    def __hash__(self):
+        return hash(self.name) ^ hash(self.server) ^ hash(self.__class__)
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.name == other.name and self.server == other.server
+
     @property
     def baseurl(self):
         return 'computer/%s' % quote(self.name)
@@ -414,6 +432,13 @@ class Build(_JenkinsBase):
         self.number = number
         self.server = self.job.server
 
+    def __hash__(self):
+        return hash(self.job) ^ hash(self.number) ^ hash(self.server) ^ hash(self.__class__)
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.job == other.job and \
+            self.number == other.number and self.server == other.server
+
     @property
     def baseurl(self):
         return '%s/%d' % (self.job.baseurl, self.number)
@@ -458,6 +483,18 @@ class Server(object):
         cls = self.__class__.__name__
         return '%s(%s)' % (cls, self.url)
 
+    def __hash__(self):
+        return hash(self.url) ^ (0 if self.auth is None else hash(self.auth.username) ^ hash(self.auth.password)) \
+            ^ hash(self.verify) ^ hash(self.__class__)
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__) and self.url == other.url and self.verify == other.verify and self.cert == other.cert:
+            if self.auth is not None and other.auth is not None:
+                return self.auth.username == other.auth.username and self.auth.password == other.auth.password
+            elif self.auth is None and other.auth is None:
+                return True
+        return False
+
     def urljoin(self, *args):
         return '%s%s' % (self.url, '/'.join(args))
 
@@ -497,6 +534,12 @@ class Jenkins(object):
     def __repr__(self):
         cls = self.__class__.__name__
         return '%s(%r)' % (cls, self.url)
+
+    def __hash__(self):
+        return hash(self.server) ^ hash(self.__class__)
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.server == other.server
 
     @property
     def info(self):
