@@ -93,6 +93,8 @@ def test_view_add_remove_job(api, ref, tmpjob, tmpview):
 
     api.view_add_job(view, job)
     assert '<string>job-abc</string>' in api.view_config(view)
+    assert 'job-abc' in api.view_jobnames('Test')
+    assert api.job('job-abc') in api.view_jobs('Test')
 
     api.view_remove_job(view, job)
     assert '<string>job-abc</string>' not in api.view_config(view)

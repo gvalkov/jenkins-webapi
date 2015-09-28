@@ -107,10 +107,13 @@ class Job(_JenkinsBase):
         return '%s(%r)' % (cls, self.name)
 
     def __hash__(self):
-        return hash(self.name) ^ hash(self.server) ^ hash(self.__class__)
+        key = (self.name, self.server, self.__class__)
+        return hash(key)
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.name == other.name and self.server == other.server
+        return isinstance(other, self.__class__) \
+               and self.name == other.name \
+               and self.server == other.server
 
     @property
     def baseurl(self):
@@ -244,10 +247,13 @@ class View(_JenkinsBase):
         return '%s(%r)' % (cls, self.name)
 
     def __hash__(self):
-        return hash(self.name) ^ hash(self.server) ^ hash(self.__class__)
+        key = (self.name, self.server, self.__class__)
+        return hash(key)
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.name == other.name and self.server == other.server
+        return isinstance(other, self.__class__) \
+               and self.name == other.name \
+               and self.server == other.server
 
     @property
     def baseurl(self):
@@ -255,19 +261,11 @@ class View(_JenkinsBase):
 
     @property
     def jobs(self):
-        return list(self.xjobs)
-
-    @property
-    def xjobs(self):
-        return (Job(i['name'], self.server) for i in self.info['jobs'])
+        return [Job(i['name'], self.server) for i in self.info['jobs']]
 
     @property
     def jobnames(self):
-        return list(self.xjobnames)
-
-    @property
-    def xjobnames(self):
-        return (i['name'] for i in self.info['jobs'])
+        return [i['name'] for i in self.info['jobs']]
 
     def delete(self):
         '''Permanently remove view.'''
@@ -364,10 +362,13 @@ class Node(_JenkinsBase):
         return '%s(%r)' % (cls, self.name)
 
     def __hash__(self):
-        return hash(self.name) ^ hash(self.server) ^ hash(self.__class__)
+        key = (self.name, self.server, self.__class__)
+        return hash(key)
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.name == other.name and self.server == other.server
+        return isinstance(other, self.__class__) \
+               and self.name == other.name \
+               and self.server == other.server
 
     @property
     def baseurl(self):
@@ -453,11 +454,14 @@ class Build(_JenkinsBase):
         self.server = self.job.server
 
     def __hash__(self):
-        return hash(self.job) ^ hash(self.number) ^ hash(self.server) ^ hash(self.__class__)
+        key = (self.job, self.number, self.server, self.__class__)
+        return hash(key)
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.job == other.job and \
-            self.number == other.number and self.server == other.server
+        return isinstance(other, self.__class__) \
+               and self.job == other.job \
+               and self.number == other.number \
+               and self.server == other.server
 
     @property
     def baseurl(self):
@@ -504,16 +508,20 @@ class Server(object):
         return '%s(%s)' % (cls, self.url)
 
     def __hash__(self):
-        return hash(self.url) ^ (0 if self.auth is None else hash(self.auth.username) ^ hash(self.auth.password)) \
-            ^ hash(self.verify) ^ hash(self.__class__)
+        key = (self.url, self.verify, self.cert, self.__class__,
+               self.auth.username if self.auth else None,
+               self.auth.password if self.auth else None)
+        return hash(key)
 
     def __eq__(self, other):
-        if isinstance(other, self.__class__) and self.url == other.url and self.verify == other.verify and self.cert == other.cert:
-            if self.auth is not None and other.auth is not None:
-                return self.auth.username == other.auth.username and self.auth.password == other.auth.password
-            elif self.auth is None and other.auth is None:
-                return True
-        return False
+        self_auth  = (self.auth.username, self.auth.password) if self.auth else None
+        other_auth = (other.auth.username, other.auth.password) if other.auth else None
+
+        return isinstance(other, self.__class__) \
+            and self.url == other.url \
+            and self.verify == other.verify \
+            and self.cert == other.cert \
+            and self_auth == other_auth
 
     def urljoin(self, *args):
         return '%s%s' % (self.url, '/'.join(args))
@@ -570,7 +578,7 @@ class Jenkins(object):
 
     @property
     def computer(self):
-        '''Get information about this Jenkins build executors.'''
+        '''Get information about the Jenkins build executors.'''
         url = 'computer/api/json'
         res = self.server.json(url, 'unable to retrieve info')
         return res
@@ -585,45 +593,26 @@ class Jenkins(object):
 
     @property
     def jobnames(self):
-        return list(self.xjobnames)
-
-    @property
-    def xjobnames(self):
-        return (i['name'] for i in self.info['jobs'])
+        return [i['name'] for i in self.info['jobs']]
 
     @property
     def views(self):
-        return list(self.xviews)
-
-    @property
-    def xviews(self):
-        return (View(i['name'], self.server) for i in self.info['views'])
+        return [View(i['name'], self.server) for i in self.info['views']]
 
     @property
     def viewnames(self):
-        return list(self.xviewnames)
-
-    @property
-    def xviewnames(self):
-        return (i['name'] for i in self.info['views'])
+        return [i['name'] for i in self.info['views']]
 
     @property
     def nodes(self):
-        return list(self.xnodes)
-
-    @property
-    def xnodes(self):
-        return (Node('(master)', self.server) if i['displayName'] == 'master' else Node(i['displayName'], self.server)
-            for i in self.computer['computer'])
+        return [Node(name, self.server) for name in self.nodenames]
 
     @property
     def nodenames(self):
-        return list(self.xnodenames)
-
-    @property
-    def xnodenames(self):
-        return ('(master)' if i['displayName'] == 'master' else i['displayName']
-            for i in self.computer['computer'])
+        names = []
+        for name in (comp['displayName'] for comp in self.computer['computer']):
+            names.append(name if name != 'master' else '(master)')
+        return names
 
     #-------------------------------------------------------------------------
     # alternative jenkins object api
@@ -715,6 +704,12 @@ class Jenkins(object):
 
     def view_config(self, name):
         return self.view(name).config
+
+    def view_jobs(self, name):
+        return self.view(name).jobs
+
+    def view_jobnames(self, name):
+        return self.view(name).jobnames
 
     def view_reconfigure(self, name, newconfig):
         view = self.view(name)

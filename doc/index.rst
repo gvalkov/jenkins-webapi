@@ -84,6 +84,7 @@ the `requests documentation`_ for more information.
    >>> j.view_reconfigure('view-name', configxml)
    >>> j.view_reconfigure_etree('view-name', config_etree)
 
+   >>> j.view_jobs()
    >>> j.view_add_job('view-name', 'job-name')
    >>> j.view_has_job('view-name', 'job-name')
    >>> j.view_remove_job('view-name', 'job-name')
@@ -115,6 +116,8 @@ the `requests documentation`_ for more information.
 
 .. code-block:: python
 
+   >>> j.nodes
+   >>> j.nodenames
    >>> j.node_create('node-name', '/workdir')
 
    >>> j.node_exists('node-name')
