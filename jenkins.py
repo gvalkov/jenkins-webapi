@@ -241,6 +241,22 @@ class View(_JenkinsBase):
     def baseurl(self):
         return 'view/%s' % quote(self.name)
 
+    @property
+    def jobs(self):
+        return list(self.xjobs)
+
+    @property
+    def xjobs(self):
+        return (Job(i['name'], self.server) for i in self.info['jobs'])
+
+    @property
+    def jobnames(self):
+        return list(self.xjobnames)
+
+    @property
+    def xjobnames(self):
+        return (i['name'] for i in self.info['jobs'])
+
     def delete(self):
         '''Permanently remove view.'''
         self._not_exist_raise()
@@ -330,6 +346,10 @@ class Node(_JenkinsBase):
 
     def __str__(self):
         return '<node:%s>' % (self.name)
+
+    def __repr__(self):
+        cls = self.__class__.__name__
+        return '%s(%r)' % (cls, self.name)
 
     @property
     def baseurl(self):
@@ -506,6 +526,13 @@ class Jenkins(object):
         return res
 
     @property
+    def computer(self):
+        '''Get information about this Jenkins build executors.'''
+        url = 'computer/api/json'
+        res = self.server.json(url, 'unable to retrieve info')
+        return res
+
+    @property
     def jobs(self):
         return list(self.xjobs)
 
@@ -520,6 +547,40 @@ class Jenkins(object):
     @property
     def xjobnames(self):
         return (i['name'] for i in self.info['jobs'])
+
+    @property
+    def views(self):
+        return list(self.xviews)
+
+    @property
+    def xviews(self):
+        return (View(i['name'], self.server) for i in self.info['views'])
+
+    @property
+    def viewnames(self):
+        return list(self.xviewnames)
+    
+    @property
+    def xviewnames(self):
+        return (i['name'] for i in self.info['views'])
+
+    @property
+    def nodes(self):
+        return list(self.xnodes)
+
+    @property
+    def xnodes(self):
+        return (Node('(master)', self.server) if i['displayName'] == 'master' else Node(i['displayName'], self.server)
+            for i in self.computer['computer'])
+
+    @property
+    def nodenames(self):
+        return list(self.xnodenames)
+
+    @property
+    def xnodenames(self):
+        return ('(master)' if i['displayName'] == 'master' else i['displayName']
+            for i in self.computer['computer'])
 
     #-------------------------------------------------------------------------
     # alternative jenkins object api
