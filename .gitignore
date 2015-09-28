@@ -17,6 +17,7 @@ tags
 __pycache__/
 htmlcov/
 *,cover
+.cache
 TAGS
 
 doc/_build
