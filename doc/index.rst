@@ -1,17 +1,21 @@
-Jenkins-webapi
---------------
+.. image:: img/logo.png
+   :align: center
+   :width: 30%
 
-Jenkins-webapi is a small, no-frills, Python module for working with
-the Jenkins remote access API_. What it brings to the table is:
 
-* Support for Python versions *2.6*, *2.7*, *3.3* and *3.4*.
+Synopsis
+========
+
+Jenkins-webapi is a minimal, no-frills, Python module for working with the
+Jenkins remote access API_. It's main selling points are:
+
+* Support for Python versions *2.6*, *2.7*, *3.3*, *3.4* and *3.5*.
 * A comprehensive test suite.
 * A concise and intuitive API.
 
-Quick Start
-===========
 
-**Installing:**
+Installing
+==========
 
 The latest stable version of *jenkins-webapi* can be installed from
 pypi_:
@@ -20,9 +24,13 @@ pypi_:
 
     $ pip install jenkins-webapi
 
-Alternatively, you may simply put the `jenkins.py`_ module in your
-load path - *jenkins-webapi* depends only on the requests_ http client
-library.
+Alternatively, you may simply place the `jenkins.py`_ module anywhere in your
+load path. Outside of the standard library, *jenkins-webapi* depends only on the
+requests_ http client library.
+
+
+Quick start
+===========
 
 **Connecting to Jenkins:**
 
@@ -31,9 +39,9 @@ library.
    >>> from jenkins import Jenkins, JenkinsError
    >>> j = Jenkins('http://server:port', 'username', 'password')
 
-The constructor also accepts the ``verify`` and ``cert`` arguments
-which are useful when accessing Jenkins over https. Please refer to
-the `requests documentation`_ for more information.
+The constructor also accepts the ``verify`` and ``cert`` arguments which are
+useful when accessing Jenkins over https. Please refer to the documentation_ of
+the the requests_ library for more information:
 
 **Working with jobs:**
 
@@ -118,6 +126,7 @@ the `requests documentation`_ for more information.
 
    >>> j.nodes
    >>> j.nodenames
+   >>> j.computer
    >>> j.node_create('node-name', '/workdir')
 
    >>> j.node_exists('node-name')
@@ -164,8 +173,21 @@ the `requests documentation`_ for more information.
   >>> node = j.node('nodename')
   >>> node.config
 
-Please refer to the auto-generated :doc:`API documenation <apidoc>`
+Please refer to the auto-generated :doc:`API documentation <apidoc>`
 for more information.
+
+
+Changelog
+=========
+
+**0.5.0 (Sep 29, 2015)**
+
+- Add ``__hash__`` and ``__eq__`` methods to all API classes (thanks `@bartoszj`_).
+- Add the ``View.jobs View.jobnames Jenkins.views Jenkins.viewnames
+  Jenkin.computer Jenkin.nodes`` and
+  ``Jenkin.nodenames`` properties (thanks `@bartoszj`_).
+- Add the ``Jenkins.view_jobs`` and ``Jenkins.view_jobnames`` methods.
+- Removed ``Jenkins.xjobnames()``.
 
 
 Similar projects
@@ -175,6 +197,9 @@ Similar projects
 * autojenkins_
 * jenkinsapi_
 * pyjenkins_
+
+Jenkins-webapi was written for the `jenkins-autojobs`_ project in a time when
+none of the above libraries offered Python 3k support.
 
 
 License
@@ -189,11 +214,14 @@ Jenkins-webapi is released under the terms of the `Revised BSD License`_.
 .. _github:     https://github.com/gvalkov/jenkins-webapi
 .. _jenkins.py: https://raw.githubusercontent.com/gvalkov/jenkins-webapi/master/jenkins.py
 .. _requests:   http://docs.python-requests.org/en/latest/
-.. _requests documentation: http://docs.python-requests.org/en/latest/user/advanced/#ssl-cert-verification
+.. _documentation: http://docs.python-requests.org/en/latest/user/advanced/#ssl-cert-verification
 
 .. _jenkinsapi:     https://pypi.python.org/pypi/jenkinsapi
 .. _python-jenkins: https://pypi.python.org/pypi/python-jenkins/
 .. _autojenkins:    https://pypi.python.org/pypi/autojenkins/
 .. _pyjenkins:      https://pypi.python.org/pypi/pyjenkins/
+.. _jenkins-autojobs: http://jenkins-autojobs.readthedocs.org/en/latest/
 
 .. _`Revised BSD License`: https://raw.github.com/gvalkov/jenkins-webapi/master/LICENSE
+
+.. _@bartoszj: https://github.com/bartoszj
