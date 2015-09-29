@@ -20,6 +20,6 @@ htmlcov/
 .cache
 TAGS
 
-doc/_build
+docs/_build
 tests/tmp/
 tests/bin/jenkins-cli-persist/JenkinsCLIPersist.class
