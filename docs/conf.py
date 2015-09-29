@@ -11,7 +11,7 @@ extensions = ['alabaster', 'sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 master_doc = 'index'
 
 project = u'jenkins-webapi'
-copyright = u'2013-2014, Georgi Valkov'
+copyright = u'2013-2015, Georgi Valkov'
 
 # read version from setup.py
 for line in open('../setup.py'):

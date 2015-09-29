@@ -5,7 +5,7 @@ from setuptools import setup
 
 
 requires = [
-    'requests>=2.5.0',
+    'requests>=2.7.0',
 ]
 
 tests_require = [
@@ -24,6 +24,7 @@ classifiers = [
     'Programming Language :: Python :: 3.2',
     'Programming Language :: Python :: 3.3',
     'Programming Language :: Python :: 3.4',
+    'Programming Language :: Python :: 3.5',
     'License :: OSI Approved :: BSD License',
     'Intended Audience :: Developers',
     'Operating System :: POSIX :: Linux',
@@ -31,7 +32,7 @@ classifiers = [
 
 kw = {
     'name':             'jenkins-webapi',
-    'version':          '0.4.1',
+    'version':          '0.5.0',
     'description':      'Module for interacting with the Jenkins CI server',
     'long_description': open('README.rst').read(),
     'author':           'Georgi Valkov',
