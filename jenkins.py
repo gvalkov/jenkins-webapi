@@ -65,15 +65,14 @@ class _JenkinsBase(object):
 
     @property
     def config_etree(self):
-        # The cost of `'lxml' in sys.modules' is negligible and is
+        # The cost of `'lxml' in sys.modules` is negligible and is
         # preferable to having a hard dependency on lxml.
         from lxml import etree
         return etree.fromstring(self.config.encode('utf8'))
 
     @config_etree.setter
-    def config_etree(self, newconfig):
-        newconfig = newconfig.tostring(etree)
-        self.reconfigure(newconfig)
+    def config_etree(self, newconfig_etree):
+        self.reconfigure(newconfig_etree.tostring())
 
     def reconfigure(self, newconfig):
         '''Update the config.xml of an existing item.'''
