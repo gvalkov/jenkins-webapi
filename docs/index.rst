@@ -7,7 +7,7 @@ Synopsis
 ========
 
 Jenkins-webapi is a minimal, no-frills, Python module for working with the
-Jenkins remote access API_. It's main selling points are:
+Jenkins remote access API_. Its main selling points are:
 
 * Support for Python versions *2.6*, *2.7*, *3.3*, *3.4* and *3.5*.
 * A comprehensive test suite.
