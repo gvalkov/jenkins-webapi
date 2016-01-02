@@ -17,14 +17,14 @@ from . utils import *
 environments = [
     {
         'url':  'http://mirrors.jenkins-ci.org/war/latest/jenkins.war',
-        'addr': 'localhost',
+        'host': 'localhost',
         'port':  60888,
         'cport': 60887,
         'destdir': pjoin(here, 'tmp/latest'),
     },
     # {
     #     'url':  'http://mirrors.jenkins-ci.org/war-stable/latest/jenkins.war',
-    #     'addr': 'localhost',
+    #     'host': 'localhost',
     #     'port':  60878,
     #     'cport': 60877,
     #     'destdir': pjoin(here, 'tmp/stable'),
@@ -67,13 +67,13 @@ def env(request):
 # A fixture to our api (the code we're trying to test)
 @pytest.fixture(scope='module')
 def api(env):
-    return Jenkins('http://%(addr)s:%(port)s' % env.__dict__)
+    return Jenkins('http://%(host)s:%(port)s' % env.__dict__)
 
 #-----------------------------------------------------------------------------
 # A fixture to the reference api (implemented through jenkins-cli.jar)
 @pytest.fixture(scope='module')
 def ref(env):
-    r = JenkinsCLI('http://%(addr)s:%(port)s' % env.__dict__, env.jenkinscli)
+    r = JenkinsCLI('http://%(host)s:%(port)s' % env.__dict__, env.jenkinscli)
 
     green('Removing all jobs ...')
     for name in r.jobs():

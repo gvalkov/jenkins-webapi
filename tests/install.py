@@ -5,21 +5,18 @@ import time
 import textwrap
 import contextlib
 
-from os.path import abspath, dirname, join as pjoin
+from os.path import join as pjoin
 from subprocess import STDOUT, Popen, CalledProcessError, call, check_call
 from . utils import *
 
 
-__all__ = ['JenkinsInstall']
-
-
 #-----------------------------------------------------------------------------
 class JenkinsInstall:
-    def __init__(self, url, destdir, addr, port, cport, logfile=None):
+    def __init__(self, url, destdir, host, port, cport, logfile=None):
         self.url = url
         self.port = port
         self.cport = cport
-        self.addr = addr
+        self.host = host
         self.destdir = destdir
 
         self.logfile    = logfile if logfile else pjoin(self.destdir, 'jenkins.log')
@@ -36,10 +33,9 @@ class JenkinsInstall:
         msg1 = 'Bootsrapping Jenkins instance:'
         msg2 = '''\
         war:     %(url)s
-        addr:    http://%(addr)s:%(port)s
+        host:    http://%(host)s:%(port)s
         destdir: %(destdir)s
-        cport:   %(cport)s
-        ''' % self.__dict__
+        cport:   %(cport)s''' % self.__dict__
 
         green(msg1)
         print(textwrap.dedent(msg2))
@@ -56,11 +52,11 @@ class JenkinsInstall:
         assert not self.proc
         cmd = '''\
         java -DJENKINS_HOME=%(homedir)s -jar %(jenkinswar)s \\
-             --httpListenAddress=%(addr)s \\
+             --httpListenAddress=%(host)s \\
              --httpPort=%(port)s \\
              --controlPort=%(cport)s''' % self.__dict__
 
-        green('Starting Jenkins on %s:%s ... ' % (self.addr, self.port))
+        green('Starting Jenkins on %s:%s ... ' % (self.host, self.port))
         print(textwrap.dedent(cmd))
 
         fh = open(self.logfile, 'w')
@@ -68,7 +64,7 @@ class JenkinsInstall:
 
     def stop(self):
         assert self.proc
-        cmd = 'echo 0 | nc %s %s &>/dev/null' % (self.addr, self.cport)
+        cmd = 'echo 0 | nc %s %s &>/dev/null' % (self.host, self.cport)
         call(cmd, shell=True)
         green('Sending shutdown signal ...')
         print(cmd)
@@ -76,7 +72,7 @@ class JenkinsInstall:
         self.proc = None
 
     def wait(self, retries=10):
-        cmd = 'curl --retry 5 -s %s:%s &>/dev/null' % (self.addr, self.port)
+        cmd = 'curl --retry 5 -s %s:%s &>/dev/null' % (self.host, self.port)
         green('Waiting for Jenkins to start ...')
         for i in range(retries):
             print(cmd)
@@ -103,15 +99,17 @@ class JenkinsInstall:
             print(cmd)
             call(cmd, shell=True)
 
-        # r = requests.get(self.url, stream=True)
-        # with open(pjoin(self.destdir, 'jenkins.war'), 'wb') as fh:
-        #     for chunk in r.iter_content(8096):
-        #         fh.write(chunk)
-
     @contextlib.contextmanager
     def instance():
         a.bootstrap()
-        a.start() ; print()
-        a.wait()  ; print()
+        a.start()
+        print()
+
+        a.wait()
+        print()
+
         yield
         a.stop()
+
+
+__all__ = ['JenkinsInstall']
