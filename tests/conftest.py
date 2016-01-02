@@ -1,5 +1,6 @@
 # -*- coding: utf-8; -*-
 
+import os
 import re
 import time
 import pytest
@@ -14,21 +15,22 @@ from . utils import *
 
 #-----------------------------------------------------------------------------
 # Specify the Jenkins environments that we wish to test against.
+TMPDIR = os.environ.get('TMPDIR', '/tmp/')
 environments = [
     {
         'url':  'http://mirrors.jenkins-ci.org/war/latest/jenkins.war',
         'host': 'localhost',
         'port':  60888,
         'cport': 60887,
-        'destdir': pjoin(here, 'tmp/latest'),
+        'destdir': pjoin(TMPDIR, 'jenkins-webapi-tests/latest'),
     },
-    # {
-    #     'url':  'http://mirrors.jenkins-ci.org/war-stable/latest/jenkins.war',
-    #     'host': 'localhost',
-    #     'port':  60878,
-    #     'cport': 60877,
-    #     'destdir': pjoin(here, 'tmp/stable'),
-    # },
+    {
+        'url':  'http://mirrors.jenkins-ci.org/war-stable/latest/jenkins.war',
+        'host': 'localhost',
+        'port':  60878,
+        'cport': 60877,
+        'destdir': pjoin(TMPDIR, 'jenkins-webapi-tests/stable'),
+    },
 ]
 
 
