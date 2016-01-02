@@ -2,6 +2,9 @@
 
 from __future__ import print_function
 
+import re
+import lxml.etree
+
 from os.path import abspath, dirname, join as pjoin
 from termcolor import colored, cprint
 
@@ -27,3 +30,16 @@ node_config_enc = node_config.encode('utf8')
 # output functions
 green = lambda x: cprint(x, 'green')
 red   = lambda x: cprint(x, 'red')
+
+re_encoding = re.compile(r'''encoding\s*?=\s*?["']([-A-Za-z0-9]+)["']''')
+def get_xml_encoding(xml_string, default='utf8'):
+	m = re_encoding.search(xml_string)
+	if not m:
+		return default
+	return m.group(1)
+
+def xml_c14n(xml_string):
+	'''Convert an xml string to a canonical xml string.'''
+	enc = get_xml_encoding(xml_string)
+	xml = lxml.etree.fromstring(xml_string.encode(enc))
+	return lxml.etree.tostring(xml, method='c14n')

@@ -52,7 +52,8 @@ def test_job_copy(api, ref):
     ref.job_create('job-copy-dst-1', job_config_enc)
 
     assert api.job_copy('job-copy-src', 'job-copy-dst').exists
-    assert api.job_config('job-copy-src').strip() == api.job_config('job-copy-dst').strip()
+    assert xml_c14n(api.job_config('job-copy-src')) == \
+           xml_c14n(api.job_config('job-copy-dst'))
 
     with pytest.raises(JenkinsError):
         api.job_copy('job-copy-src', 'job-copy-dst-1')
