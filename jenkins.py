@@ -20,6 +20,9 @@ __all__ = (
     'Node'
 )
 
+__version__ = '0.5.0'
+
+
 #-----------------------------------------------------------------------------
 class _JenkinsBase(object):
     '''Base class for Jenkins objects.'''
