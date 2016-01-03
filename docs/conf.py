@@ -11,15 +11,9 @@ extensions = ['alabaster', 'sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 master_doc = 'index'
 
 project = u'jenkins-webapi'
-copyright = u'2013-2015, Georgi Valkov'
+copyright = u'2013-2016, Georgi Valkov'
 
-# read version from setup.py
-for line in open('../setup.py'):
-    m = re.search("'version':.*'(.*)'", line)
-    if m:
-        release = m.group(1)
-        break
-
+release = '0.5.0'
 version = release
 exclude_patterns = ['_build']
 
