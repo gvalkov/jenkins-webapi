@@ -7,5 +7,5 @@ recursive-exclude tests/tmp *
 recursive-exclude tests/bin/jenkins-cli-persist *
 
 # Docs
-recursive-include doc *
-recursive-exclude doc/_build *
+recursive-include docs *
+recursive-exclude docs/_build *
