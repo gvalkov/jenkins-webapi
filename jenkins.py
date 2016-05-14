@@ -500,6 +500,7 @@ class Server(object):
         self.auth = HTTPBasicAuth(username, password) if username else None
         self.verify = verify
         self.cert = cert
+        self.crumb_header = None
 
         # These arguments will be passed in every call to requests.get|post().
         self.request_kw = {
@@ -533,6 +534,10 @@ class Server(object):
 
     def post(self, url, throw=True, **kw):
         kw = mergedict(self.request_kw, kw)
+        if self.crumb_header is not None:
+            headers = kw.get('headers', dict())
+            headers = mergedict(headers, self.crumb_header)
+            kw['headers'] = headers
         res = requests.post(self.urljoin(url), **kw)
         throw and res.raise_for_status()
         return res
@@ -563,6 +568,7 @@ class Jenkins(object):
 
         self.server = Server(url, username, password, verify, cert)
         self.url = self.server.url
+        self.server.crumb_header = self.crumb_header
 
     def __repr__(self):
         cls = self.__class__.__name__
@@ -587,6 +593,27 @@ class Jenkins(object):
         url = 'computer/api/json'
         res = self.server.json(url, 'unable to retrieve info')
         return res
+
+    @property
+    def crumb(self):
+        '''Get crumb (or None if doesn't exist) from the Jenkins.'''
+        url = 'crumbIssuer/api/json'
+        try:
+            res = self.server.json(url, 'unable to retrieve info')
+            return res
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                return None
+            raise
+        except JenkinsError:
+            return None
+
+    @property
+    def crumb_header(self):
+        crumb = self.crumb
+        if crumb is None:
+            return None
+        return {crumb['crumbRequestField']: crumb['crumb']}
 
     @property
     def jobs(self):
