@@ -655,8 +655,8 @@ class Jenkins(object):
         return View(name, self.server)
 
     def build(self, name, number):
-        name = name.name if isinstance(name, Job) else name
-        return Build(name, number)
+        job = name if isinstance(name, Job) else self.job(name)
+        return Build(job, number)
 
     def node(self, name):
         return Node(name, self.server)
