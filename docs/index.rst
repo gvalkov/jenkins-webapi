@@ -177,19 +177,6 @@ Please refer to the auto-generated :doc:`API documentation <apidoc>`
 for more information.
 
 
-Changelog
-=========
-
-**0.5.0 (Sep 29, 2015)**
-
-- Add ``__hash__`` and ``__eq__`` methods to all API classes (thanks `@bartoszj`_).
-- Add the ``View.jobs View.jobnames Jenkins.views Jenkins.viewnames
-  Jenkin.computer Jenkin.nodes`` and
-  ``Jenkin.nodenames`` properties (thanks `@bartoszj`_).
-- Add the ``Jenkins.view_jobs`` and ``Jenkins.view_jobnames`` methods.
-- Removed ``Jenkins.xjobnames()``.
-
-
 Similar projects
 ================
 
@@ -223,5 +210,3 @@ Jenkins-webapi is released under the terms of the `Revised BSD License`_.
 .. _jenkins-autojobs: http://jenkins-autojobs.readthedocs.org/en/latest/
 
 .. _`Revised BSD License`: https://raw.github.com/gvalkov/jenkins-webapi/master/LICENSE
-
-.. _@bartoszj: https://github.com/bartoszj
