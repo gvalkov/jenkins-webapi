@@ -11,7 +11,7 @@ extensions = ['alabaster', 'sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 master_doc = 'index'
 
 project = u'jenkins-webapi'
-copyright = u'2013-2016, Georgi Valkov'
+copyright = u'2013-2017, Georgi Valkov'
 
 release = '0.5.3'
 version = release
