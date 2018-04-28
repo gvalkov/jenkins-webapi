@@ -1,12 +1,12 @@
 from setuptools import setup
 
 requires = [
-    'requests>=2.7.0',
+    'requests>=2.8.0',
 ]
 
 tests_require = [
-    'pytest >= 2.6.3',
-    'pytest-cov >= 1.8.0',
+    'pytest >= 3.5.0',
+    'pytest-cov >= 2.5.0',
     'httmock >= 1.2.2',
 ]
 
