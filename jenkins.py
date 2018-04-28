@@ -404,6 +404,9 @@ class Node(_JenkinsBase):
         mode = 'EXCLUSIVE' if exclusive else 'NORMAL'
         launcher_params['stapler-class'] = launcher
 
+        # Note that CommandLauncher class removed from Jenkins core in 2.86.
+        # It is now available in the command-launcher plugin.
+
         inner_params = {
             'name': name,
             'nodeDescription': node_description,

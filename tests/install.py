@@ -2,12 +2,13 @@
 
 import os
 import time
+import shutil
 import textwrap
 import contextlib
-
-from os.path import join as pjoin
 from subprocess import STDOUT, Popen, CalledProcessError, call, check_call
-from . utils import *
+
+from .utils import *
+from .refapi import JenkinsCLI
 
 
 #-----------------------------------------------------------------------------
@@ -19,10 +20,12 @@ class JenkinsInstall:
         self.host = host
         self.destdir = destdir
 
-        self.logfile    = logfile if logfile else pjoin(self.destdir, 'jenkins.log')
-        self.jenkinswar = pjoin(self.destdir, 'jenkins.war')
-        self.jenkinscli = pjoin(self.destdir, 'jenkins-cli.jar')
-        self.homedir    = pjoin(self.destdir, 'home')
+        self.logfile    = logfile if logfile else os.path.join(self.destdir, 'jenkins.log')
+        self.jenkinswar = os.path.join(self.destdir, 'jenkins.war')
+        self.jenkinscli = os.path.join(self.destdir, 'jenkins-cli.jar')
+        self.homedir    = os.path.join(self.destdir, 'home')
+        self.initdir    = os.path.join(self.homedir, 'init.groovy.d')
+        self.plugindir  = os.path.join(self.homedir, 'plugins')
 
         self.proc = None
 
@@ -37,11 +40,11 @@ class JenkinsInstall:
         destdir: %(destdir)s
         cport:   %(cport)s''' % self.__dict__
 
-        green(msg1)
+        print(msg1)
         print(textwrap.dedent(msg2))
 
         if not os.path.exists(self.destdir):
-            green('Mkdir: %s' % self.destdir)
+            print('Mkdir: %s' % self.destdir)
             os.makedirs(self.destdir)
 
         self.download()
@@ -50,30 +53,31 @@ class JenkinsInstall:
 
     def start(self):
         assert not self.proc
+
         cmd = '''\
         java -DJENKINS_HOME=%(homedir)s -jar %(jenkinswar)s \\
              --httpListenAddress=%(host)s \\
              --httpPort=%(port)s \\
              --controlPort=%(cport)s''' % self.__dict__
 
-        green('Starting Jenkins on %s:%s ... ' % (self.host, self.port))
+        print('Starting Jenkins on %s:%s ... ' % (self.host, self.port))
         print(textwrap.dedent(cmd))
 
-        fh = open(self.logfile, 'w')
-        self.proc = Popen(cmd, shell=True, stdout=fh, stderr=STDOUT)
+        with open(self.logfile, 'w') as fh:
+            self.proc = Popen(cmd, shell=True, stdout=fh, stderr=STDOUT)
 
     def stop(self):
         assert self.proc
         cmd = 'echo 0 | nc %s %s &>/dev/null' % (self.host, self.cport)
         call(cmd, shell=True)
-        green('Sending shutdown signal ...')
+        print('Sending shutdown signal ...')
         print(cmd)
         self.proc.wait()
         self.proc = None
 
     def wait(self, retries=10):
         cmd = 'curl --retry 5 -s %s:%s &>/dev/null' % (self.host, self.port)
-        green('Waiting for Jenkins to start ...')
+        print('Waiting for Jenkins to start ...')
         for i in range(retries):
             print(cmd)
             try:
@@ -88,28 +92,28 @@ class JenkinsInstall:
         if not os.path.exists(self.jenkinscli) or overwrite:
             cmd = 'unzip -qqc %s WEB-INF/jenkins-cli.jar > %s' \
                   % (self.jenkinswar, self.jenkinscli)
-            green('Extracing jenkins-cli.jar from jenkins.war ...')
+            print('Extracing jenkins-cli.jar from jenkins.war ...')
             print(cmd)
             call(cmd, shell=True)
 
     def download(self, overwrite=False):
         if not os.path.exists(self.jenkinswar) or overwrite:
             cmd = 'curl -# -L %s > %s' % (self.url, self.jenkinswar)
-            green('Downloading jenkins.war ...')
+            print('Downloading jenkins.war ...')
             print(cmd)
             call(cmd, shell=True)
 
     @contextlib.contextmanager
-    def instance():
-        a.bootstrap()
-        a.start()
+    def instance(self):
+        self.bootstrap()
+        self.start()
         print()
 
-        a.wait()
+        self.wait()
         print()
 
         yield
-        a.stop()
+        self.stop()
 
 
 __all__ = ['JenkinsInstall']

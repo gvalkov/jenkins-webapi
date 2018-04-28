@@ -6,7 +6,6 @@ requires = [
 
 tests_require = [
     'pytest >= 2.6.3',
-    'termcolor >= 1.1.0',
     'pytest-cov >= 1.8.0',
     'httmock >= 1.2.2',
 ]

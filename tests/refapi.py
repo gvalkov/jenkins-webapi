@@ -1,5 +1,3 @@
-# -*- coding: utf-8; -*-
-
 from subprocess import STDOUT, PIPE, Popen, CalledProcessError
 from functools import partial
 
@@ -8,8 +6,11 @@ from . utils import *
 
 #-----------------------------------------------------------------------------
 class JenkinsCLI:
-    def __init__(self, url, jar):
-        self.cmd = ['java', '-jar', jar, '-s', url]
+    def __init__(self, url, jar, username=None, password=None):
+        self.cmd = ['java', '-jar', jar, '-s', url, '-noKeyAuth']
+
+        if username and password:
+            self.cmd += ['-auth', '%s:%s' % (username, password)]
 
         self.view_exists = partial(self.item_exists, 'view')
         self.node_exists = partial(self.item_exists, 'node')
@@ -28,12 +29,12 @@ class JenkinsCLI:
         self.job_config  = partial(self.item_config, 'job')
 
     def item_delete(self, item, name):
-        green('\nRemoving %s "%s" with jenkins-cli' % (item, name))
+        print('\nRemoving %s "%s" with jenkins-cli' % (item, name))
         cmd = self.cmd + ['delete-%s' % item, name]
         return run(cmd, success_codes=[0, 255])
 
     def item_create(self, item, name, configxml):
-        green('\nCreating %s "%s" with jenkins-cli' % (item, name))
+        print('\nCreating %s "%s" with jenkins-cli' % (item, name))
         cmd = self.cmd + ['create-%s' % item]
         if name:
             cmd.append(name)
@@ -48,7 +49,7 @@ class JenkinsCLI:
         return run(cmd)
 
     def item_exists(self, item, name):
-        green('\nDetermining if %s "%s" exists with jenkins-cli' % (item, name))
+        print('\nDetermining if %s "%s" exists with jenkins-cli' % (item, name))
         try:
             self.item_config(item, name)
             return True
@@ -56,17 +57,17 @@ class JenkinsCLI:
             return False
 
     def job_disable(self, name):
-        green('\nDisabling job "%s" with jenkins-cli' % name)
+        print('\nDisabling job "%s" with jenkins-cli' % name)
         cmd = self.cmd + ['disable-job', name]
         return run(cmd)
 
     def job_enable(self, name):
-        green('\nEnabling job "%s" with jenkins-cli' % name)
+        print('\nEnabling job "%s" with jenkins-cli' % name)
         cmd = self.cmd + ['enable-job', name]
         return run(cmd)
 
     def jobs(self):
-        green('\nListing jobs with jenkins-cli ...')
+        print('\nListing jobs with jenkins-cli ...')
         cmd = self.cmd + ['list-jobs']
         return run(cmd).decode('utf8').splitlines()
 

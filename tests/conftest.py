@@ -1,11 +1,7 @@
-# -*- coding: utf-8; -*-
-
 import os
 import re
 import time
 import pytest
-
-from os.path import join as pjoin
 
 from jenkins import Jenkins
 from . install import JenkinsInstall
@@ -16,20 +12,21 @@ from . utils import *
 #-----------------------------------------------------------------------------
 # Specify the Jenkins environments that we wish to test against.
 TMPDIR = os.environ.get('TMPDIR', '/tmp/')
+
 environments = [
     {
         'url':  'http://mirrors.jenkins-ci.org/war/latest/jenkins.war',
         'host': 'localhost',
         'port':  60888,
         'cport': 60887,
-        'destdir': pjoin(TMPDIR, 'jenkins-webapi-tests/latest'),
+        'destdir': os.path.join(TMPDIR, 'jenkins-webapi-tests/latest'),
     },
     {
         'url':  'http://mirrors.jenkins-ci.org/war-stable/latest/jenkins.war',
         'host': 'localhost',
         'port':  60878,
         'cport': 60877,
-        'destdir': pjoin(TMPDIR, 'jenkins-webapi-tests/stable'),
+        'destdir': os.path.join(TMPDIR, 'jenkins-webapi-tests/stable'),
     },
 ]
 
@@ -43,7 +40,7 @@ def pytest_addoption(parser):
 #-----------------------------------------------------------------------------
 @pytest.fixture(params=environments, scope='session')
 def env(request):
-    # Download and install jenkins.war
+    # Download and install jenkins.war.
     ji = JenkinsInstall(**request.param)
 
     def start():
@@ -54,7 +51,7 @@ def env(request):
         ji.wait()
 
     if request.config.getoption('--reuse-jenkins'):
-        green('Trying to connect to an already running Jenkins ...')
+        print('Trying to connect to an already running Jenkins ...')
         if ji.wait(2):
             return ji
         else:
@@ -66,18 +63,19 @@ def env(request):
     return ji
 
 #-----------------------------------------------------------------------------
-# A fixture to our api (the code we're trying to test)
+# A fixture to our api (i.e. the code we're trying to test).
 @pytest.fixture(scope='module')
 def api(env):
-    return Jenkins('http://%(host)s:%(port)s' % env.__dict__)
+    return Jenkins('http://%(host)s:%(port)s' % env.__dict__, username='jenkins', password='jenkins')
 
 #-----------------------------------------------------------------------------
-# A fixture to the reference api (implemented through jenkins-cli.jar)
+# A fixture to the reference api (i.e. wrapper around jenkins-cli.jar).
 @pytest.fixture(scope='module')
 def ref(env):
-    r = JenkinsCLI('http://%(host)s:%(port)s' % env.__dict__, env.jenkinscli)
+    url = 'http://%(host)s:%(port)s' % env.__dict__
+    r = JenkinsCLI(url, env.jenkinscli, username='jenkins', password='jenkins')
 
-    green('Removing all jobs ...')
+    print('Removing all jobs ...')
     for name in r.jobs():
         r.job_delete(name)
 
@@ -96,6 +94,7 @@ def jobname_gc(jobname, ref, request):
     yield jobname
     ref.job_delete(jobname)
 
+
 # A temporary job using the jobname fixture and the reference api.
 @pytest.yield_fixture(scope='function')
 def tmpjob_named(jobname, ref, request):
@@ -103,7 +102,7 @@ def tmpjob_named(jobname, ref, request):
     yield jobname
     ref.job_delete(jobname)
 
-#-----------------------------------------------------------------------------
+
 # A temporary job to which we give a name. Uses the reference api.
 @pytest.yield_fixture(scope='function')
 def tmpjob(ref, request):
@@ -111,17 +110,20 @@ def tmpjob(ref, request):
     yield job
     job.finalize()
 
+
 @pytest.yield_fixture(scope='function')
 def tmpview(ref, request):
     view = TempView(ref)
     yield view
     view.finalize()
 
+
 @pytest.yield_fixture(scope='function')
 def tmpnode(ref, request):
     node = TempNode(ref)
     yield node
     node.finalize()
+
 
 class TempJob:
     def __init__(self, ref):
@@ -135,6 +137,7 @@ class TempJob:
     def finalize(self):
         self.ref.job_delete(self.name)
         time.sleep(0.1)
+
 
 class TempJenkinsObject:
     def create(config):
@@ -158,6 +161,7 @@ class TempJenkinsObject:
         self.delete(self.name)
         time.sleep(0.1)
 
+
 class TempView(TempJenkinsObject):
     default_config = view_config
 
@@ -166,6 +170,7 @@ class TempView(TempJenkinsObject):
 
     def delete(self, name):
         self.ref.view_delete(name)
+
 
 class TempNode(TempJenkinsObject):
     default_config = node_config
