@@ -57,7 +57,7 @@ class _JenkinsBase(object):
     def config(self):
         url = self.url('config.xml')
         res = self.server.get(url)
-        if res.status_code != 200 or res.headers.get('content-type', '') != 'application/xml':
+        if res.status_code != 200 or res.headers.get('content-type', '').startswith('application/xml'):
             msg = 'fetching configuration for item "%s" did not return an xml document'
             raise JenkinsError(msg % self.name)
         return res.text
