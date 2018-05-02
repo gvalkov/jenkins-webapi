@@ -13,7 +13,7 @@ master_doc = 'index'
 project = u'jenkins-webapi'
 copyright = u'2013-2017, Georgi Valkov'
 
-release = '0.5.5'
+release = '0.5.6'
 version = release
 exclude_patterns = ['_build']
 
